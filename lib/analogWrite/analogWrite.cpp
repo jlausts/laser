@@ -34,38 +34,43 @@ void pwmSetup(uint32_t pin, uint32_t value)
     if (tcEnabled[tcNum]) return;  // Already setup
     tcEnabled[tcNum] = true;
 
+    int counter = pin == 6 || pin == 12 ? 1199: 0xFF;
+
 
     GCLK->PCHCTRL[GCLK_CLKCTRL_IDs[tcNum]].reg = GCLK_PCHCTRL_GEN_GCLK0_Val | (1 << GCLK_PCHCTRL_CHEN_Pos);
 
     if (tcNum >= TCC_INST_NUM) {
+        int divider = pin == 6 || pin == 12 ? TC_CTRLA_MODE_COUNT8 | TC_CTRLA_PRESCALER_DIV1 : TC_CTRLA_MODE_COUNT8 | TC_CTRLA_PRESCALER_DIV8;
+
         Tc *TCx = (Tc *)GetTC(pinDesc.ulPWMChannel);
         TCx->COUNT8.CTRLA.bit.SWRST = 1;
         while (TCx->COUNT8.SYNCBUSY.bit.SWRST);
         TCx->COUNT8.CTRLA.bit.ENABLE = 0;
         while (TCx->COUNT8.SYNCBUSY.bit.ENABLE);
-        TCx->COUNT8.CTRLA.reg = TC_CTRLA_MODE_COUNT8 | TC_CTRLA_PRESCALER_DIV8;
+        TCx->COUNT8.CTRLA.reg = divider;
         TCx->COUNT8.WAVE.reg = TC_WAVE_WAVEGEN_NPWM;
         while (TCx->COUNT8.SYNCBUSY.bit.CC0);
         TCx->COUNT8.CC[tcChannel].reg = (uint8_t)value;
         while (TCx->COUNT8.SYNCBUSY.bit.CC0);
-        TCx->COUNT8.PER.reg = 0xFF;
+        TCx->COUNT8.PER.reg = counter;
         while (TCx->COUNT8.SYNCBUSY.bit.PER);
         TCx->COUNT8.CTRLA.bit.ENABLE = 1;
         while (TCx->COUNT8.SYNCBUSY.bit.ENABLE);
     } 
     else {
+        int divider = pin == 6 || pin == 12 ? TCC_CTRLA_PRESCALER_DIV1 | TCC_CTRLA_PRESCSYNC_GCLK : TCC_CTRLA_PRESCALER_DIV8 | TCC_CTRLA_PRESCSYNC_GCLK;
         Tcc *TCCx = (Tcc *)GetTC(pinDesc.ulPWMChannel);
         TCCx->CTRLA.bit.SWRST = 1;
         while (TCCx->SYNCBUSY.bit.SWRST);
         TCCx->CTRLA.bit.ENABLE = 0;
         while (TCCx->SYNCBUSY.bit.ENABLE);
-        TCCx->CTRLA.reg = TCC_CTRLA_PRESCALER_DIV8 | TCC_CTRLA_PRESCSYNC_GCLK;
+        TCCx->CTRLA.reg = divider;
         TCCx->WAVE.reg = TCC_WAVE_WAVEGEN_NPWM;
         while (TCCx->SYNCBUSY.bit.WAVE);
         while (TCCx->SYNCBUSY.bit.CC0 || TCCx->SYNCBUSY.bit.CC1);
         TCCx->CC[tcChannel].reg = (uint32_t)value;
         while (TCCx->SYNCBUSY.bit.CC0 || TCCx->SYNCBUSY.bit.CC1);
-        TCCx->PER.reg = 0xFF;
+        TCCx->PER.reg = counter;
         while (TCCx->SYNCBUSY.bit.PER);
         TCCx->CTRLA.bit.ENABLE = 1;
         while (TCCx->SYNCBUSY.bit.ENABLE);
@@ -112,6 +117,20 @@ void pwmWriteAll(const uint32_t r, const uint32_t g, const uint32_t b)
         TCCx1->CTRLBCLR.bit.LUPD = 1;
         TCCx2->CTRLBCLR.bit.LUPD = 1;
         TCCx3->CTRLBCLR.bit.LUPD = 1;
+        // while (TCCx->SYNCBUSY.bit.CTRLB || TCCx2->SYNCBUSY.bit.CTRLB || TCCx3->SYNCBUSY.bit.CTRLB);
+}
+
+void pwmWriteAll(const uint32_t l, const uint32_t r)
+{
+        Tcc *const TCCx1 = (Tcc *)GetTC(pinDescs[6].ulPWMChannel);
+        Tcc *const TCCx2 = (Tcc *)GetTC(pinDescs[12].ulPWMChannel);
+        // while (TCCx->SYNCBUSY.bit.CTRLB && TCCx2->SYNCBUSY.bit.CTRLB && TCCx3->SYNCBUSY.bit.CTRLB);
+        // while (TCCx->SYNCBUSY.bit.CC0 || TCCx->SYNCBUSY.bit.CC1 || TCCx2->SYNCBUSY.bit.CC0 || TCCx2->SYNCBUSY.bit.CC1 || TCCx3->SYNCBUSY.bit.CC0 || TCCx3->SYNCBUSY.bit.CC1);
+        TCCx1->CCBUF[tcChannels[6]].reg = l;
+        TCCx2->CCBUF[tcChannels[12]].reg = r;
+        // while (TCCx->SYNCBUSY.bit.CC0 || TCCx->SYNCBUSY.bit.CC1 || TCCx2->SYNCBUSY.bit.CC0 || TCCx2->SYNCBUSY.bit.CC1 || TCCx3->SYNCBUSY.bit.CC0 || TCCx3->SYNCBUSY.bit.CC1);
+        TCCx1->CTRLBCLR.bit.LUPD = 1;
+        TCCx2->CTRLBCLR.bit.LUPD = 1;
         // while (TCCx->SYNCBUSY.bit.CTRLB || TCCx2->SYNCBUSY.bit.CTRLB || TCCx3->SYNCBUSY.bit.CTRLB);
 }
 

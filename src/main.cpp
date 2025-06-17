@@ -1,10 +1,9 @@
 #include <Arduino.h>
-#include "wiring_private.h"          // pinPeripheral(), etc.
+#include "wiring_private.h"          
 #include <analogWrite.h>
 #include <sin_table.h>
 #include <motion.h>
 // #include <motion2.h>
-#include <audio.h>
 #include <shapes.h>
 
 
@@ -97,14 +96,31 @@ void enableCycleCounter()
   DWT->CTRL |= DWT_CTRL_CYCCNTENA_Msk;             // Start the counter
 }
 
-bool on;
+bool write_dac, write_audio;
+uint16_t laser_x, laser_y;
+uint16_t audio_l = 50, audio_r = 50;
+uint64_t i_count = 0;
+
 void TimerHandler()
 {
-    on = !on;
-    if (on)
-        {pin10on;}
-    else
-        {pin10of;}
+    pin10on;
+    ++i_count;
+    if (write_dac)
+    {
+        DAC->DATA[0].reg = laser_x; 
+        DAC->DATA[1].reg = laser_x; 
+        write_dac = false;
+    }
+    if (write_audio)
+    {
+        if (audio_l > 1199)
+            audio_l = 0;
+        if (audio_r > 1199)
+            audio_r = 0;
+        pwmWriteAll(audio_l, audio_r);
+        write_audio = false;
+    }
+    pin10of;
 }
 
 void setup()
@@ -116,18 +132,14 @@ void setup()
     pwmSetup(RGB_CH_RED, color.r);
     pwmSetup(RGB_CH_GREEN, color.g);
     pwmSetup(RGB_CH_BLUE, color.b);
+    pwmSetup(6, 150);
+    pwmSetup(12, 150);
     pinMode(10, OUTPUT);
 
+
+    ITimer.attachInterruptInterval(TIMER_INTERVAL_US, TimerHandler);
+
     Serial.begin(115200);
-    Serial.println("Starting up...");
-
-    if (ITimer.attachInterruptInterval(TIMER_INTERVAL_US, TimerHandler))
-    {
-        Serial.print(F("Starting  ITimer OK"));
-    }
-    else
-        Serial.println(F("Can't set ITimer. Select another freq. or timer"));
-
     // enableCycleCounter();
 }
 
@@ -169,6 +181,9 @@ void square()
         WRITE_BOTH(a, b);
     }
     change_color();
+    write_audio = true;
+    audio_l ++;
+    audio_r ++;
 }
 
 void randLines()
@@ -238,54 +253,7 @@ void randArcsold()
 
 void loop()
 {
-
-    audio[0] = new SAMD_PWM(5, 100000, 50);
-    audio[0]->setPWM();
-    audio[1] = new SAMD_PWM(7, 100000, 25);
-    audio[1]->setPWM();
-
-
-    // classd_pwm_init(400000);   /* 400 kHz carrier (e.g. 120 MHz / 300) */
-    // while (1)
-    // {
-    //     /* Example: simple 1 kHz triangle on both channels */
-    //     for (uint16_t d = 0; d <= _top_ticks; d += 10)
-    //     {
-    //         classd_pwm_update(d, d);
-    //         delayMicroseconds(25);  /* audio update rate: ~40 kHz */
-    //     }
-    //     for (int32_t d = _top_ticks; d >= 0; d -= 10)
-    //     {
-    //         classd_pwm_update(d, d);
-    //         delayMicroseconds(25);
-    //     }
-    // }
-
-
-
     while(1){square();}
-
-    
-    // while(1) draw_quad(2000, 0,
-    //                     4095, 1000,
-    //                     4095, 4095,
-    //                     0, 4095,
-    //                     1000000);
-    for (int x = 0; x < 4000; x += 10)
-    {
-        ellipse_arc(x, 2048, 1000, 500, 0, 4, 8000);
-    }
-    loop();
-
-
-    circle(0.01f, 2048, 2048, 100);
-    COLOR_ON;
-    for (float rad = 0.05; rad <= 1.0f; rad += 0.05f)
-    {
-        circle(rad, 2048, 2048, 100);
-    }
-    COLOR_OFF;
-    delayMicroseconds(10);
 }
 
 

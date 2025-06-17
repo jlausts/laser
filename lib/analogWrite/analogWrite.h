@@ -20,3 +20,4 @@ void pwmSetup(uint32_t pin, uint32_t value);
 // void pwmDisable();
 // void pwmEnable();
 void pwmWriteAll(uint32_t r, uint32_t g, uint32_t b);
+void pwmWriteAll(const uint32_t l, const uint32_t r);

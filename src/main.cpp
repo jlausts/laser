@@ -103,7 +103,7 @@ uint64_t i_count = 0;
 
 void TimerHandler()
 {
-    pin10on;
+    // pin10on;
     ++i_count;
     if (write_dac)
     {
@@ -120,7 +120,7 @@ void TimerHandler()
         pwmWriteAll(audio_l, audio_r);
         write_audio = false;
     }
-    pin10of;
+    // pin10of;
 }
 
 void setup()
@@ -134,7 +134,9 @@ void setup()
     pwmSetup(RGB_CH_BLUE, color.b);
     pwmSetup(6, 150);
     pwmSetup(12, 150);
-    pinMode(10, OUTPUT);
+    // pwmSetup(19, 1000);
+    // pwmSetup(10, 1000);
+    // pinMode(10, OUTPUT);
 
 
     ITimer.attachInterruptInterval(TIMER_INTERVAL_US, TimerHandler);

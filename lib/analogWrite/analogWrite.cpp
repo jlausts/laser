@@ -9,6 +9,18 @@ PinDescription pinDescs[20];
 #define pin10of digitalWrite(10, LOW);//PORT->Group[PORTA].OUTCLR.reg = PORT_PA20
 
 
+
+
+// TCC OK => pin 4, 5, 6, 8, 9, 10, 11, 16/A2, 17/A3
+// TC OK  => pin 12
+// For ITSYBITSY_M4
+// 16-bit Higher accuracy, Lower Frequency, PWM Pin OK: TCCx: 0-2, 4, 5, 7, 9-13
+
+//  8-bit Lower  accuracy, Hi Frequency,    PWM Pin OK: TCx: 18-20, 24-25
+
+
+
+
 void pwmSetup(uint32_t pin, uint32_t value)
 {
     static bool tcEnabled[TCC_INST_NUM + TC_INST_NUM];
@@ -34,13 +46,13 @@ void pwmSetup(uint32_t pin, uint32_t value)
     if (tcEnabled[tcNum]) return;  // Already setup
     tcEnabled[tcNum] = true;
 
-    int counter = pin == 6 || pin == 12 ? 1199: 0xFF;
+    int counter = pin > 5 ? 1199: 0xFF;
 
 
     GCLK->PCHCTRL[GCLK_CLKCTRL_IDs[tcNum]].reg = GCLK_PCHCTRL_GEN_GCLK0_Val | (1 << GCLK_PCHCTRL_CHEN_Pos);
 
     if (tcNum >= TCC_INST_NUM) {
-        int divider = pin == 6 || pin == 12 ? TC_CTRLA_MODE_COUNT8 | TC_CTRLA_PRESCALER_DIV1 : TC_CTRLA_MODE_COUNT8 | TC_CTRLA_PRESCALER_DIV8;
+        int divider = pin > 5 ? TC_CTRLA_MODE_COUNT8 | TC_CTRLA_PRESCALER_DIV1 : TC_CTRLA_MODE_COUNT8 | TC_CTRLA_PRESCALER_DIV8;
 
         Tc *TCx = (Tc *)GetTC(pinDesc.ulPWMChannel);
         TCx->COUNT8.CTRLA.bit.SWRST = 1;
@@ -58,7 +70,7 @@ void pwmSetup(uint32_t pin, uint32_t value)
         while (TCx->COUNT8.SYNCBUSY.bit.ENABLE);
     } 
     else {
-        int divider = pin == 6 || pin == 12 ? TCC_CTRLA_PRESCALER_DIV1 | TCC_CTRLA_PRESCSYNC_GCLK : TCC_CTRLA_PRESCALER_DIV8 | TCC_CTRLA_PRESCSYNC_GCLK;
+        int divider = pin > 5 ? TCC_CTRLA_PRESCALER_DIV1 | TCC_CTRLA_PRESCSYNC_GCLK : TCC_CTRLA_PRESCALER_DIV8 | TCC_CTRLA_PRESCSYNC_GCLK;
         Tcc *TCCx = (Tcc *)GetTC(pinDesc.ulPWMChannel);
         TCCx->CTRLA.bit.SWRST = 1;
         while (TCCx->SYNCBUSY.bit.SWRST);
@@ -108,30 +120,38 @@ void pwmWriteAll(const uint32_t r, const uint32_t g, const uint32_t b)
         Tcc *const TCCx1 = (Tcc *)GetTC(pinDescs[2].ulPWMChannel);
         Tcc *const TCCx2 = (Tcc *)GetTC(pinDescs[3].ulPWMChannel);
         Tcc *const TCCx3 = (Tcc *)GetTC(pinDescs[4].ulPWMChannel);
-        // while (TCCx->SYNCBUSY.bit.CTRLB && TCCx2->SYNCBUSY.bit.CTRLB && TCCx3->SYNCBUSY.bit.CTRLB);
-        // while (TCCx->SYNCBUSY.bit.CC0 || TCCx->SYNCBUSY.bit.CC1 || TCCx2->SYNCBUSY.bit.CC0 || TCCx2->SYNCBUSY.bit.CC1 || TCCx3->SYNCBUSY.bit.CC0 || TCCx3->SYNCBUSY.bit.CC1);
         TCCx1->CCBUF[tcChannels[2]].reg = r;
         TCCx2->CCBUF[tcChannels[3]].reg = g;
         TCCx3->CCBUF[tcChannels[4]].reg = b;
-        // while (TCCx->SYNCBUSY.bit.CC0 || TCCx->SYNCBUSY.bit.CC1 || TCCx2->SYNCBUSY.bit.CC0 || TCCx2->SYNCBUSY.bit.CC1 || TCCx3->SYNCBUSY.bit.CC0 || TCCx3->SYNCBUSY.bit.CC1);
         TCCx1->CTRLBCLR.bit.LUPD = 1;
         TCCx2->CTRLBCLR.bit.LUPD = 1;
         TCCx3->CTRLBCLR.bit.LUPD = 1;
-        // while (TCCx->SYNCBUSY.bit.CTRLB || TCCx2->SYNCBUSY.bit.CTRLB || TCCx3->SYNCBUSY.bit.CTRLB);
 }
 
 void pwmWriteAll(const uint32_t l, const uint32_t r)
 {
         Tcc *const TCCx1 = (Tcc *)GetTC(pinDescs[6].ulPWMChannel);
         Tcc *const TCCx2 = (Tcc *)GetTC(pinDescs[12].ulPWMChannel);
-        // while (TCCx->SYNCBUSY.bit.CTRLB && TCCx2->SYNCBUSY.bit.CTRLB && TCCx3->SYNCBUSY.bit.CTRLB);
-        // while (TCCx->SYNCBUSY.bit.CC0 || TCCx->SYNCBUSY.bit.CC1 || TCCx2->SYNCBUSY.bit.CC0 || TCCx2->SYNCBUSY.bit.CC1 || TCCx3->SYNCBUSY.bit.CC0 || TCCx3->SYNCBUSY.bit.CC1);
         TCCx1->CCBUF[tcChannels[6]].reg = l;
         TCCx2->CCBUF[tcChannels[12]].reg = r;
-        // while (TCCx->SYNCBUSY.bit.CC0 || TCCx->SYNCBUSY.bit.CC1 || TCCx2->SYNCBUSY.bit.CC0 || TCCx2->SYNCBUSY.bit.CC1 || TCCx3->SYNCBUSY.bit.CC0 || TCCx3->SYNCBUSY.bit.CC1);
         TCCx1->CTRLBCLR.bit.LUPD = 1;
         TCCx2->CTRLBCLR.bit.LUPD = 1;
-        // while (TCCx->SYNCBUSY.bit.CTRLB || TCCx2->SYNCBUSY.bit.CTRLB || TCCx3->SYNCBUSY.bit.CTRLB);
+}
+
+void pwmWriteAll(const uint32_t l, const uint32_t r, const uint32_t l0, const uint32_t r0)
+{
+        Tcc *const TCCx1 = (Tcc *)GetTC(pinDescs[6].ulPWMChannel);
+        Tcc *const TCCx2 = (Tcc *)GetTC(pinDescs[12].ulPWMChannel);
+        Tcc *const TCCx3 = (Tcc *)GetTC(pinDescs[19].ulPWMChannel);
+        Tcc *const TCCx4 = (Tcc *)GetTC(pinDescs[10].ulPWMChannel);
+        TCCx1->CCBUF[tcChannels[6]].reg = l;
+        TCCx2->CCBUF[tcChannels[12]].reg = r;
+        TCCx3->CCBUF[tcChannels[19]].reg = l0;
+        TCCx4->CCBUF[tcChannels[10]].reg = r0;
+        TCCx1->CTRLBCLR.bit.LUPD = 1;
+        TCCx2->CTRLBCLR.bit.LUPD = 1;
+        TCCx3->CTRLBCLR.bit.LUPD = 1;
+        TCCx4->CTRLBCLR.bit.LUPD = 1;
 }
 
 

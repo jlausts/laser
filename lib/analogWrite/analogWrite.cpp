@@ -5,6 +5,9 @@ uint32_t tcNums[20];
 uint8_t tcChannels[20];
 PinDescription pinDescs[20];
 
+#define pin10on digitalWrite(10, HIGH);//PORT->Group[PORTA].OUTSET.reg = PORT_PA20
+#define pin10of digitalWrite(10, LOW);//PORT->Group[PORTA].OUTCLR.reg = PORT_PA20
+
 
 void pwmSetup(uint32_t pin, uint32_t value)
 {
@@ -30,6 +33,7 @@ void pwmSetup(uint32_t pin, uint32_t value)
 
     if (tcEnabled[tcNum]) return;  // Already setup
     tcEnabled[tcNum] = true;
+
 
     GCLK->PCHCTRL[GCLK_CLKCTRL_IDs[tcNum]].reg = GCLK_PCHCTRL_GEN_GCLK0_Val | (1 << GCLK_PCHCTRL_CHEN_Pos);
 
@@ -70,14 +74,15 @@ void pwmSetup(uint32_t pin, uint32_t value)
 
 void pwmWrite(uint32_t pin, uint32_t value)
 {
-    if (tcNums[pin] >= TCC_INST_NUM) 
-    {
-        Tc *TCx = (Tc *)GetTC(pinDescs[pin].ulPWMChannel);
-        TCx->COUNT8.CC[tcChannels[pin]].reg = (uint8_t)value;
-        while (TCx->COUNT8.SYNCBUSY.bit.CC0 || TCx->COUNT8.SYNCBUSY.bit.CC1);
-    } 
-    else 
-    {
+    // if (tcNums[pin] >= TCC_INST_NUM) 
+    // {
+    //     Tc *TCx = (Tc *)GetTC(pinDescs[pin].ulPWMChannel);
+    //     TCx->COUNT8.CC[tcChannels[pin]].reg = (uint8_t)value;
+    //     while (TCx->COUNT8.SYNCBUSY.bit.CC0 || TCx->COUNT8.SYNCBUSY.bit.CC1);
+    // } 
+    // else 
+    // {
+        // pin10on;
         Tcc *TCCx = (Tcc *)GetTC(pinDescs[pin].ulPWMChannel);
         while (TCCx->SYNCBUSY.bit.CTRLB);
         while (TCCx->SYNCBUSY.bit.CC0 || TCCx->SYNCBUSY.bit.CC1);
@@ -85,8 +90,31 @@ void pwmWrite(uint32_t pin, uint32_t value)
         while (TCCx->SYNCBUSY.bit.CC0 || TCCx->SYNCBUSY.bit.CC1);
         TCCx->CTRLBCLR.bit.LUPD = 1;
         while (TCCx->SYNCBUSY.bit.CTRLB);
-    }
+        // pin10of;
+    // }
 }
+
+
+// shoudl wait 10 us after this to write a new color
+// takes 1.083 us or 130 clock cycles.
+// very reliable time
+void pwmWriteAll(const uint32_t r, const uint32_t g, const uint32_t b)
+{
+        Tcc *const TCCx1 = (Tcc *)GetTC(pinDescs[2].ulPWMChannel);
+        Tcc *const TCCx2 = (Tcc *)GetTC(pinDescs[3].ulPWMChannel);
+        Tcc *const TCCx3 = (Tcc *)GetTC(pinDescs[4].ulPWMChannel);
+        // while (TCCx->SYNCBUSY.bit.CTRLB && TCCx2->SYNCBUSY.bit.CTRLB && TCCx3->SYNCBUSY.bit.CTRLB);
+        // while (TCCx->SYNCBUSY.bit.CC0 || TCCx->SYNCBUSY.bit.CC1 || TCCx2->SYNCBUSY.bit.CC0 || TCCx2->SYNCBUSY.bit.CC1 || TCCx3->SYNCBUSY.bit.CC0 || TCCx3->SYNCBUSY.bit.CC1);
+        TCCx1->CCBUF[tcChannels[2]].reg = r;
+        TCCx2->CCBUF[tcChannels[3]].reg = g;
+        TCCx3->CCBUF[tcChannels[4]].reg = b;
+        // while (TCCx->SYNCBUSY.bit.CC0 || TCCx->SYNCBUSY.bit.CC1 || TCCx2->SYNCBUSY.bit.CC0 || TCCx2->SYNCBUSY.bit.CC1 || TCCx3->SYNCBUSY.bit.CC0 || TCCx3->SYNCBUSY.bit.CC1);
+        TCCx1->CTRLBCLR.bit.LUPD = 1;
+        TCCx2->CTRLBCLR.bit.LUPD = 1;
+        TCCx3->CTRLBCLR.bit.LUPD = 1;
+        // while (TCCx->SYNCBUSY.bit.CTRLB || TCCx2->SYNCBUSY.bit.CTRLB || TCCx3->SYNCBUSY.bit.CTRLB);
+}
+
 
 void pwmDisable()
 {

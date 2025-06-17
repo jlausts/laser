@@ -3,12 +3,10 @@
 #include <analogWrite.h>
 #include <math.h>
 
-// radius 0 -> 1
-void circle(const int radius, const int x, const int y, const int time_us);
+void horizontal_square();
 
-void line(const int x1, const int y1, const int x2, const int y2, const int time_us);
-
-void arc_three(uint16_t x0, uint16_t y0,
-               uint16_t x1, uint16_t y1,
-               uint16_t x2, uint16_t y2,
+void draw_quad(int x1, int y1,
+               int x2, int y2,
+               int x3, int y3,
+               int x4, int y4,
                uint32_t time_us);

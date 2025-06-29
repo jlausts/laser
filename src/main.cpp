@@ -1,261 +1,254 @@
-#include <Arduino.h>
-#include "wiring_private.h"          
-#include <analogWrite.h>
-#include <sin_table.h>
-#include <motion.h>
-// #include <motion2.h>
-#include <shapes.h>
+#include "main.h"
 
-
-#define DAC_PIN0 A0                   // only A0 has the DAC
-#define DAC_PIN1 A1                   // only A0 has the DAC
-
-// channel numbers inside TCC0 that correspond to our pins
-#define RGB_CH_RED     2
-#define RGB_CH_GREEN   3
-#define RGB_CH_BLUE    4
-
-#define pin8on PORT->Group[PORTB].OUTSET.reg = (1 << 10);
-#define pin8off PORT->Group[PORTB].OUTCLR.reg = (1 << 10);  // Pin 8 is PB10
-
-
-#define COLOR_OFF pwmWriteAll(0, 0, 0)
-
-#define pin10on {digitalWrite(10, HIGH);}//PORT->Group[PORTA].OUTSET.reg = PORT_PA20
-#define pin10of {digitalWrite(10, LOW);}//PORT->Group[PORTA].OUTCLR.reg = PORT_PA20
-
-
-#define COLOR_ON pwmWriteAll(color.r, color.g, color.b)
-
-typedef struct color {
-    int r;                    
-    int g;                    
-    int b;    
-    int radd;
-    int gadd;
-    int badd;         
-    const int minr;  // minimum red value
-    const int ming; // minimum green value
-    const int minb;  // minimum blue value       
-} Color;
-
-// Color color = { 255, 255, 0 , 1, 1, 1, 66, 92, 50}; // initial color values
-Color color = { 90, 130, 70 , 1, 1, 1, 66, 92, 50}; // initial color values
-
-
-
-
-
-
-
-
-
-#include "SAMDTimerInterrupt.h"
-
-#define USING_TIMER_TC3         true      // Only TC3 can be used for SAMD51
-#define USING_TIMER_TC4         false     // Not to use with Servo library
-#define USING_TIMER_TC5         false
-#define USING_TIMER_TCC         false
-#define USING_TIMER_TCC1        false
-#define USING_TIMER_TCC2        false     // Don't use this, can crash on some boards
-
-#if USING_TIMER_TC3
-  #define SELECTED_TIMER      TIMER_TC3
-#elif USING_TIMER_TC4
-  #define SELECTED_TIMER      TIMER_TC4
-#elif USING_TIMER_TC5
-  #define SELECTED_TIMER      TIMER_TC5
-#elif USING_TIMER_TCC
-  #define SELECTED_TIMER      TIMER_TCC
-#elif USING_TIMER_TCC1
-  #define SELECTED_TIMER      TIMER_TCC1
-#elif USING_TIMER_TCC2
-  #define SELECTED_TIMER      TIMER_TCC
-#else
-  #error You have to select 1 Timer  
-#endif
-
-// Init selected SAMD timer
-SAMDTimer ITimer(SELECTED_TIMER);
-
-#define TIMER_INTERVAL_US        20
-
-
-
-
-
-
-
-
-/*********************************************************************
-  Enable the DWT cycle counter once at boot.
-*********************************************************************/
-void enableCycleCounter()
+void pulse10(const int num_pulses)
 {
-  CoreDebug->DEMCR |= CoreDebug_DEMCR_TRCENA_Msk;  // Enable trace
-  DWT->CTRL |= DWT_CTRL_CYCCNTENA_Msk;             // Start the counter
+    for (int i = 0 ; i < num_pulses; ++i)
+    {
+        pin10on;
+        delayMicroseconds(10);
+        pin10of;
+        delayMicroseconds(10);
+    }
 }
 
-bool write_dac, write_audio;
-uint16_t laser_x, laser_y;
-uint16_t audio_l = 50, audio_r = 50;
-uint64_t i_count = 0;
+void p10(const int num_pulses)
+{
+    for (int i = 0 ; i < num_pulses; ++i)
+    {
+        pin10on;
+        pin10of;
+    }
+}
+
+void pwmSetup(uint32_t pin, uint32_t value)
+{
+    static bool tcEnabled[TCC_INST_NUM + TC_INST_NUM];
+    PinDescription pinDesc = g_APinDescription[pin];
+    uint32_t attr = pinDesc.ulPinAttribute;
+
+    if (!(attr & (PIN_ATTR_PWM_E | PIN_ATTR_PWM_F | PIN_ATTR_PWM_G))) return;
+
+    uint32_t tcNum = GetTCNumber(pinDesc.ulPWMChannel);
+    uint8_t tcChannel = GetTCChannelNumber(pinDesc.ulPWMChannel);
+
+    tcNums[pin] = tcNum;
+    tcChannels[pin] = tcChannel;
+    pinDescs[pin] = pinDesc;
+
+    if (attr & PIN_ATTR_PWM_E)
+        pinPeripheral(pin, PIO_TIMER);
+    else if (attr & PIN_ATTR_PWM_F)
+        pinPeripheral(pin, PIO_TIMER_ALT);
+    else if (attr & PIN_ATTR_PWM_G)
+        pinPeripheral(pin, PIO_TCC_PDEC);
+
+    if (tcEnabled[tcNum]) return;  // Already setup
+    tcEnabled[tcNum] = true;
+
+    int counter = pin > 5 ? 1199: 0xFF; // audio counts to 1199, rgb counts to 255
+
+
+    GCLK->PCHCTRL[GCLK_CLKCTRL_IDs[tcNum]].reg = GCLK_PCHCTRL_GEN_GCLK0_Val | (1 << GCLK_PCHCTRL_CHEN_Pos);
+
+    if (tcNum >= TCC_INST_NUM) {
+        int divider = pin > 5 ? TC_CTRLA_MODE_COUNT8 | TC_CTRLA_PRESCALER_DIV1 : TC_CTRLA_MODE_COUNT8 | TC_CTRLA_PRESCALER_DIV8;
+
+        Tc *TCx = (Tc *)GetTC(pinDesc.ulPWMChannel);
+        TCx->COUNT8.CTRLA.bit.SWRST = 1;
+        while (TCx->COUNT8.SYNCBUSY.bit.SWRST);
+        TCx->COUNT8.CTRLA.bit.ENABLE = 0;
+        while (TCx->COUNT8.SYNCBUSY.bit.ENABLE);
+        TCx->COUNT8.CTRLA.reg = divider;
+        TCx->COUNT8.WAVE.reg = TC_WAVE_WAVEGEN_NPWM;
+        while (TCx->COUNT8.SYNCBUSY.bit.CC0);
+        TCx->COUNT8.CC[tcChannel].reg = (uint8_t)value;
+        while (TCx->COUNT8.SYNCBUSY.bit.CC0);
+        TCx->COUNT8.PER.reg = counter;
+        while (TCx->COUNT8.SYNCBUSY.bit.PER);
+        TCx->COUNT8.CTRLA.bit.ENABLE = 1;
+        while (TCx->COUNT8.SYNCBUSY.bit.ENABLE);
+    } 
+    else {
+        int divider = pin > 5 ? TCC_CTRLA_PRESCALER_DIV1 | TCC_CTRLA_PRESCSYNC_GCLK : TCC_CTRLA_PRESCALER_DIV8 | TCC_CTRLA_PRESCSYNC_GCLK;
+        Tcc *TCCx = (Tcc *)GetTC(pinDesc.ulPWMChannel);
+        TCCx->CTRLA.bit.SWRST = 1;
+        while (TCCx->SYNCBUSY.bit.SWRST);
+        TCCx->CTRLA.bit.ENABLE = 0;
+        while (TCCx->SYNCBUSY.bit.ENABLE);
+        TCCx->CTRLA.reg = divider;
+        TCCx->WAVE.reg = TCC_WAVE_WAVEGEN_NPWM;
+        while (TCCx->SYNCBUSY.bit.WAVE);
+        while (TCCx->SYNCBUSY.bit.CC0 || TCCx->SYNCBUSY.bit.CC1);
+        TCCx->CC[tcChannel].reg = (uint32_t)value;
+        while (TCCx->SYNCBUSY.bit.CC0 || TCCx->SYNCBUSY.bit.CC1);
+        TCCx->PER.reg = counter;
+        while (TCCx->SYNCBUSY.bit.PER);
+        TCCx->CTRLA.bit.ENABLE = 1;
+        while (TCCx->SYNCBUSY.bit.ENABLE);
+    }
+}
+
+inline void write_color(const Data *const info)
+{
+    // should wait 10 us after this to write a new color. takes 1.083 us or 130 clock cycles.
+    Tcc *const TCCx1 = (Tcc *)GetTC(pinDescs[2].ulPWMChannel);
+    Tcc *const TCCx2 = (Tcc *)GetTC(pinDescs[3].ulPWMChannel);
+    Tcc *const TCCx3 = (Tcc *)GetTC(pinDescs[4].ulPWMChannel);
+    TCCx1->CCBUF[tcChannels[2]].reg = info->r;
+    TCCx2->CCBUF[tcChannels[3]].reg = info->g;
+    TCCx3->CCBUF[tcChannels[4]].reg = info->b;
+    TCCx1->CTRLBCLR.bit.LUPD = 1;
+    TCCx2->CTRLBCLR.bit.LUPD = 1;
+    TCCx3->CTRLBCLR.bit.LUPD = 1;
+}
+
+inline void write_audio(const Data *const info)
+{
+    Tcc *const TCCx1 = (Tcc *)GetTC(pinDescs[6].ulPWMChannel);
+    Tcc *const TCCx2 = (Tcc *)GetTC(pinDescs[12].ulPWMChannel);
+    TCCx1->CCBUF[tcChannels[6]].reg = info->audio_l;
+    TCCx2->CCBUF[tcChannels[12]].reg = info->audio_r;
+    TCCx1->CTRLBCLR.bit.LUPD = 1;
+    TCCx2->CTRLBCLR.bit.LUPD = 1;
+}
+
+inline void write_laser(const Data *const info)
+{
+    DAC->DATA[0].reg = info->laser_x; 
+    DAC->DATA[1].reg = info->laser_y; 
+}
+
+inline void pull_from_serial()
+{
+    // buffer array for serial communication
+    static uint8_t info[256];
+
+    // wait for the interrupts to use up the data.
+    volatile bool *const empty = &data[!array_reading][0].empty;
+    while (!(*empty));
+
+    Data *tmp_data = data[!array_reading];
+
+    // 16 iterations
+    for (uint16_t c = 0; c < 256;)
+    {
+        // wait for data from the serial port
+        while (!Serial.usb.available(CDC_ENDPOINT_OUT));
+
+        // pull 256 bytes from Serial (maxes out at 256)
+        epHandlers[CDC_ENDPOINT_OUT]->recv(info, 256);
+
+        // 16 iterations
+        for (uint16_t chunk = 0; chunk < 256; chunk += 16, ++c)
+        {
+            // adjust pointers
+            Data *i = &tmp_data[c];
+            uint8_t *tmp = &info[chunk];
+
+            // rgb is left shifted by 3 because it is 5 bit and we only use the most significant bits.
+            i->r = ( tmp[0] & 0b00011111) << 3 | 0b111;
+            i->g = ((tmp[0] & 0b11100000) >> 2) | ((tmp[1] & 0b00000011) << 6) | 0b111;
+            i->b = ( tmp[1] & 0b01111100) << 1 | 0b111;
+
+            // pull out the audio and laser position
+            i->laser_x = (uint16_t)tmp[2] | ((uint16_t)(tmp[3] & 0x0F) << 8);
+            i->laser_y = (uint16_t)(tmp[3] >> 4) | (((uint16_t)tmp[4]) << 4);
+            i->audio_l = (uint16_t)tmp[5] | ((uint16_t)(tmp[6] & 0x0F) << 8);
+            i->audio_r = (uint16_t)(tmp[6] >> 4) | (((uint16_t)tmp[7]) << 4);
+            i->empty = false;
+
+
+            // pull out the timestamp
+            i->t = tmp[8] | 
+                    ((uint16_t)tmp[9 ] << 8 ) | 
+                    ((uint32_t)tmp[10] << 16) | 
+                    ((uint32_t)tmp[11] << 24) | 
+                    ((uint64_t)tmp[12] << 32) | 
+                    ((uint64_t)tmp[13] << 40) | 
+                    ((uint64_t)tmp[14] << 48) | 
+                    ((uint64_t)tmp[15] << 56);
+
+            // reset the interrupt counter if timestamp is zero
+            if (!i->t)
+                i_count = 0;
+        }
+    }
+}
+
+
 
 void TimerHandler()
 {
-    // pin10on;
-    ++i_count;
-    if (write_dac)
-    {
-        DAC->DATA[0].reg = laser_x; 
-        DAC->DATA[1].reg = laser_x; 
-        write_dac = false;
-    }
-    if (write_audio)
-    {
-        if (audio_l > 1199)
-            audio_l = 0;
-        if (audio_r > 1199)
-            audio_r = 0;
-        pwmWriteAll(audio_l, audio_r);
-        write_audio = false;
-    }
-    // pin10of;
+    // when this gets to 256, it will switch to the other data array, and the empty one will get filled
+    static uint8_t array_count = 0;
+
+    // when the uint8 rolls over, switch the arrays
+    if (!array_count)
+        array_reading = !array_reading;
+
+    // adjust pointer
+    Data *const info = &data[array_reading][array_count];
+
+    // return if the timestamp has not matched the requirement
+    // return if the info has already been used
+    if (++i_count < info->t || info->empty)
+        return;
+
+
+    // if (info->laser_x == 2000)
+    //     p10(5);
+
+    // delayMicroseconds(1);
+    
+    // if (info->laser_y == 2000)
+    //     p10(10);
+
+    // write to the ports
+    write_color(info);
+    write_laser(info);
+    write_audio(info);
+    info->empty = true;
+
+    // the current array address is nolonger valid
+    array_count++;
 }
 
 void setup()
 {
-    analogWriteResolution(12);         // 0-4095
-    analogWrite(DAC_PIN0, 0);          // prime hardware
-    analogWrite(DAC_PIN1, 0);          // prime hardware
+    // prime DAC
+    analogWriteResolution(12); 
+    analogWrite(DAC_PIN0, 0);  
+    analogWrite(DAC_PIN1, 0);  
 
-    pwmSetup(RGB_CH_RED, color.r);
-    pwmSetup(RGB_CH_GREEN, color.g);
-    pwmSetup(RGB_CH_BLUE, color.b);
-    pwmSetup(6, 150);
-    pwmSetup(12, 150);
-    // pwmSetup(19, 1000);
-    // pwmSetup(10, 1000);
-    // pinMode(10, OUTPUT);
+    // setup RGB PWM
+    pwmSetup(RGB_CH_RED, 0);
+    pwmSetup(RGB_CH_GREEN, 0);
+    pwmSetup(RGB_CH_BLUE, 0);
 
-
-    ITimer.attachInterruptInterval(TIMER_INTERVAL_US, TimerHandler);
+    // setup audio PWM
+    pwmSetup(6, 150);  
+    pwmSetup(12, 150); 
 
     Serial.begin(115200);
-    // enableCycleCounter();
+
+    // use pin10on; or pin10of;
+    pinMode(10, OUTPUT); // debugging pin
+
+    // fill up the arrays
+    data[0][0].empty = true;
+    data[1][0].empty = true;
+    pull_from_serial(); 
+    array_reading = !array_reading;
+    pull_from_serial(); 
+
+    // setup ISR
+    ITimer.attachInterruptInterval(TIMER_INTERVAL_US, TimerHandler);
 }
-
-uint16_t wave(uint16_t t, const uint16_t max_val = 4095) {
-    if (t < max_val)          return t;
-    else if (t < 2 * max_val) return 2 * max_val - t;
-    else if (t < 3 * max_val) return t - 2 * max_val;
-    else                      return 4 * max_val - t;
-}
-
-
-
-// 1.358 us or 163 clock cycles
-void change_color()
-{
-    // pin10on;
-    pwmWriteAll(color.r += color.radd, color.g += color.gadd, color.b += color.badd);
-
-    if (color.r == 255) color.radd = -1;  
-    if (color.r == color.minr) color.radd = 1;     
-    if (color.g == 255) color.gadd = -1;  
-    if (color.g == color.ming) color.gadd = 1;     
-    if (color.b == 255) color.badd = -1;  
-    if (color.b == color.minb) color.badd = 1;   
-    // pin10of;
-}
-
-
-void square()
-{
-    const uint16_t max_val = 4095;
-    const uint16_t quarter_cycle = 2048;
-    const int step = 1;
-
-    for (uint16_t t = 0; t < 4 * max_val; t+=step) 
-    {
-        uint16_t a = wave(t);
-        uint16_t b = wave((t + quarter_cycle) % (4 * max_val));
-        WRITE_BOTH(a, b);
-    }
-    change_color();
-    write_audio = true;
-    audio_l ++;
-    audio_r ++;
-}
-
-void randLines()
-{
-    for (int i = 0; i < 100; ++i)
-        line(random(0, 4096), random(0, 4096), random(0, 4096), random(0, 4096), 100000); 
-}
-
-void circles()
-{
-    for (int x = 0; x < 4096; x += 200)
-    {   
-        line(0, 0, 4096, 0, 10000);
-        line(4096, 0, 4096, 4096, 10000);
-        line(4096, 4096, 0, 4096, 10000);
-        line(0, 4096, 0, 0, 10000);
-        circle(900, x, 2048, 10000);
-    }
-}
-
-void move(int x1, int y1, int x2, int y2, int steps)
-{
-    COLOR_OFF;
-    for (int i = 0; i <= steps; ++i)
-    {
-        const float t = 1 - ((float)i / steps);       
-        const float ease = 1 - t * t; 
-
-        const int x = x1 + (x2 - x1) * ease;
-        const int y = y1 + (y2 - y1) * ease;
-
-        WRITE_BOTH(x, y);
-    }
-    COLOR_ON;
-}
-
-void randArcs()
-{
-    for (int i = 0; i < 4096 - 100; i += 400)
-    {
-        line_decel(0, i, 4096, i, 3000);
-        if (i > 3500)
-            move(4096, i, 0, 0, 1000);
-        else
-            move(4096, i, 0, i+400, 320);
-    }
-}
-
-void randArcsold()
-{
-    WRITE_BOTH(4096, 0);
-    delayMicroseconds(1000);
-
-    for (int i = 0; i < 4096 - 100; i += 500)
-    {
-        WRITE_BOTH(4096, i);
-        delayMicroseconds(500);
-        COLOR_ON;
-        line(0, i, 4096, i, 3000);
-        COLOR_OFF;
-    }
-}
-
-
-
-
 
 void loop()
 {
-    while(1){square();}
+    pull_from_serial(); 
+    // pulse10(20);
 }
 
 

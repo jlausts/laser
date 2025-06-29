@@ -2,6 +2,7 @@
     "files.associations": {
         "type_traits": "cpp",
         "compare": "cpp",
-        "cmath": "cpp"
+        "cmath": "cpp",
+        "unistd.h": "c"
     }
 }

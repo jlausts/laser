@@ -180,8 +180,6 @@ inline void pull_from_serial_to_array()
     get_from_serial();
 }
 
-
-
 void TimerHandler()
 {
     // when this gets to 256, it will switch to the other data array, and the empty one will get filled
@@ -248,30 +246,4 @@ void loop()
 {
     pull_from_serial_to_array(); 
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 

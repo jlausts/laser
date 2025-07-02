@@ -14,6 +14,15 @@
 #define pin10on {digitalWrite(10, HIGH);}//PORT->Group[PORTA].OUTSET.reg = PORT_PA20
 #define pin10of {digitalWrite(10, LOW);}//PORT->Group[PORTA].OUTCLR.reg = PORT_PA20
 
+#define pin11on {digitalWrite(11, HIGH);}//PORT->Group[PORTA].OUTSET.reg = PORT_PA20
+#define pin11of {digitalWrite(11, LOW);}//PORT->Group[PORTA].OUTCLR.reg = PORT_PA20
+
+#define pin13on {digitalWrite(13, HIGH);}//PORT->Group[PORTA].OUTSET.reg = PORT_PA20
+#define pin13of {digitalWrite(13, LOW);}//PORT->Group[PORTA].OUTCLR.reg = PORT_PA20
+
+#define pin9on {digitalWrite(9, HIGH);}//PORT->Group[PORTA].OUTSET.reg = PORT_PA20
+#define pin9of {digitalWrite(9, LOW);}//PORT->Group[PORTA].OUTCLR.reg = PORT_PA20
+
 #define SERCOM_PORT SERCOM5  // You can use any of the 6 available SERCOMs
 extern EPHandler *epHandlers[7];
 
@@ -81,7 +90,7 @@ PinDescription pinDescs[20];
 volatile bool array_reading = true;
 
 // increments every time the ISR gets triggered
-volatile uint64_t i_count = 0;
+volatile uint32_t i_count = 0;
 
 
 // 16 bytes (technically)
@@ -90,8 +99,8 @@ typedef struct __attribute__((packed))
     bool empty;
     uint8_t r, g, b;
     uint16_t laser_x, laser_y, audio_l, audio_r;
-    uint64_t t;
+    // uint32_t t;
 } Data;
 
 // one array is read while the other is filled from Serial
-Data data[2][256] = {0};
+volatile Data data[2][256] = {0};

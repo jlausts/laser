@@ -88,7 +88,7 @@ void pwmSetup(uint32_t pin, uint32_t value)
     }
 }
 
-inline void write_color(const Data *const info)
+inline void write_color(volatile const Data *const info)
 {
     // should wait 10 us after this to write a new color. takes 1.083 us or 130 clock cycles.
     Tcc *const TCCx1 = (Tcc *)GetTC(pinDescs[2].ulPWMChannel);
@@ -102,7 +102,7 @@ inline void write_color(const Data *const info)
     TCCx3->CTRLBCLR.bit.LUPD = 1;
 }
 
-inline void write_audio(const Data *const info)
+inline void write_audio(volatile const Data *const info)
 {
     Tcc *const TCCx1 = (Tcc *)GetTC(pinDescs[6].ulPWMChannel);
     Tcc *const TCCx2 = (Tcc *)GetTC(pinDescs[12].ulPWMChannel);
@@ -112,67 +112,72 @@ inline void write_audio(const Data *const info)
     TCCx2->CTRLBCLR.bit.LUPD = 1;
 }
 
-inline void write_laser(const Data *const info)
+inline void write_laser(volatile const Data *const info)
 {
     DAC->DATA[0].reg = info->laser_x; 
     DAC->DATA[1].reg = info->laser_y; 
 }
 
-inline void pull_from_serial()
+inline void unpack(volatile Data *i, uint8_t *tmp)
 {
-    // buffer array for serial communication
-    static uint8_t info[256];
+    // rgb is left shifted by 3 because it is 5 bit and we only use the most significant bits.
+    i->r = ( tmp[0] & 0b00011111) << 3 | 0b111;
+    i->g = ((tmp[0] & 0b11100000) >> 2) | ((tmp[1] & 0b00000011) << 6) | 0b111;
+    i->b = ( tmp[1] & 0b01111100) << 1 | 0b111;
 
+    // pull out the audio and laser position
+    i->laser_x = (uint16_t)tmp[2] | ((uint16_t)(tmp[3] & 0x0F) << 8);
+    i->laser_y = (uint16_t)(tmp[3] >> 4) | (((uint16_t)tmp[4]) << 4);
+    i->audio_l = (uint16_t)tmp[5] | ((uint16_t)(tmp[6] & 0x0F) << 8);
+    i->audio_r = (uint16_t)(tmp[6] >> 4) | (((uint16_t)tmp[7]) << 4);
+    i->empty = false;
+
+    // pull out the timestamp
+    // i->t = tmp[8] | 
+    //         ((uint16_t)tmp[9 ] << 8 ) | 
+    //         ((uint32_t)tmp[10] << 16);// | 
+            // ((uint32_t)tmp[11] << 24) | 
+            // ((uint64_t)tmp[12] << 32) | 
+            // ((uint64_t)tmp[13] << 40) | 
+            // ((uint64_t)tmp[14] << 48) | 
+            // ((uint64_t)tmp[15] << 56);
+}
+
+inline void wait_for_empty_array()
+{
     // wait for the interrupts to use up the data.
-    volatile bool *const empty = &data[!array_reading][0].empty;
-    while (!(*empty));
+    {
+        volatile bool *const empty = &data[!array_reading][0].empty;
+        while (!(*empty));
+    }
+}
 
-    Data *tmp_data = data[!array_reading];
+inline void get_from_serial()
+{
+    static uint8_t serial_data[256];
+    volatile Data *tmp_data = data[!array_reading];
 
     // 16 iterations
     for (uint16_t c = 0; c < 256;)
     {
+        pin10on;
         // wait for data from the serial port
         while (!Serial.usb.available(CDC_ENDPOINT_OUT));
+        pin10of;
 
-        // pull 256 bytes from Serial (maxes out at 256)
-        epHandlers[CDC_ENDPOINT_OUT]->recv(info, 256);
+        // pull 250 bytes from Serial (maxes out at 256)
+        epHandlers[CDC_ENDPOINT_OUT]->recv(serial_data, 256);
 
-        // 16 iterations
-        for (uint16_t chunk = 0; chunk < 256; chunk += 16, ++c)
-        {
-            // adjust pointers
-            Data *i = &tmp_data[c];
-            uint8_t *tmp = &info[chunk];
+        // 25 iterations
+        for (uint16_t chunk = 0; chunk < 256; chunk += 8, ++c)
+            unpack(&tmp_data[c], &serial_data[chunk]);
+    }  
+}
 
-            // rgb is left shifted by 3 because it is 5 bit and we only use the most significant bits.
-            i->r = ( tmp[0] & 0b00011111) << 3 | 0b111;
-            i->g = ((tmp[0] & 0b11100000) >> 2) | ((tmp[1] & 0b00000011) << 6) | 0b111;
-            i->b = ( tmp[1] & 0b01111100) << 1 | 0b111;
-
-            // pull out the audio and laser position
-            i->laser_x = (uint16_t)tmp[2] | ((uint16_t)(tmp[3] & 0x0F) << 8);
-            i->laser_y = (uint16_t)(tmp[3] >> 4) | (((uint16_t)tmp[4]) << 4);
-            i->audio_l = (uint16_t)tmp[5] | ((uint16_t)(tmp[6] & 0x0F) << 8);
-            i->audio_r = (uint16_t)(tmp[6] >> 4) | (((uint16_t)tmp[7]) << 4);
-            i->empty = false;
-
-
-            // pull out the timestamp
-            i->t = tmp[8] | 
-                    ((uint16_t)tmp[9 ] << 8 ) | 
-                    ((uint32_t)tmp[10] << 16) | 
-                    ((uint32_t)tmp[11] << 24) | 
-                    ((uint64_t)tmp[12] << 32) | 
-                    ((uint64_t)tmp[13] << 40) | 
-                    ((uint64_t)tmp[14] << 48) | 
-                    ((uint64_t)tmp[15] << 56);
-
-            // reset the interrupt counter if timestamp is zero
-            if (!i->t)
-                i_count = 0;
-        }
-    }
+inline void pull_from_serial_to_array()
+{
+    wait_for_empty_array();
+    get_from_serial();
 }
 
 
@@ -184,32 +189,27 @@ void TimerHandler()
 
     // when the uint8 rolls over, switch the arrays
     if (!array_count)
+    {
+        array_count = 0;
         array_reading = !array_reading;
+        digitalWrite(9, array_reading);
+    }
 
     // adjust pointer
-    Data *const info = &data[array_reading][array_count];
+    volatile Data *const info = &data[array_reading][array_count];
 
     // return if the timestamp has not matched the requirement
     // return if the info has already been used
-    if (++i_count < info->t || info->empty)
+    if (info->empty)
         return;
-
-
-    // if (info->laser_x == 2000)
-    //     p10(5);
-
-    // delayMicroseconds(1);
     
-    // if (info->laser_y == 2000)
-    //     p10(10);
-
     // write to the ports
     write_color(info);
     write_laser(info);
     write_audio(info);
-    info->empty = true;
 
     // the current array address is nolonger valid
+    info->empty = true;
     array_count++;
 }
 
@@ -229,17 +229,16 @@ void setup()
     pwmSetup(6, 150);  
     pwmSetup(12, 150); 
 
-    Serial.begin(115200);
+    Serial.begin(1000000);
 
-    // use pin10on; or pin10of;
+    pinMode(9 , OUTPUT); // debugging pin
     pinMode(10, OUTPUT); // debugging pin
+    pinMode(11, OUTPUT); // debugging pin
+    pinMode(13, OUTPUT); // debugging pin
 
-    // fill up the arrays
-    data[0][0].empty = true;
-    data[1][0].empty = true;
-    pull_from_serial(); 
+    get_from_serial(); 
     array_reading = !array_reading;
-    pull_from_serial(); 
+    get_from_serial(); 
 
     // setup ISR
     ITimer.attachInterruptInterval(TIMER_INTERVAL_US, TimerHandler);
@@ -247,8 +246,7 @@ void setup()
 
 void loop()
 {
-    pull_from_serial(); 
-    // pulse10(20);
+    pull_from_serial_to_array(); 
 }
 
 

@@ -11,7 +11,6 @@
                 "c:/Users/jlaus/Documents/Arduino/laser/include",
                 "c:/Users/jlaus/Documents/Arduino/laser/src",
                 "c:/Users/jlaus/Documents/Arduino/laser/lib/Timer",
-                "C:/Users/jlaus/.platformio/packages/framework-arduino-samd-adafruit/libraries/USBHost/src",
                 "C:/Users/jlaus/.platformio/packages/framework-cmsis/CMSIS/Core/Include",
                 "C:/Users/jlaus/.platformio/packages/framework-cmsis-atmel/CMSIS/Device/ATMEL",
                 "C:/Users/jlaus/.platformio/packages/framework-arduino-samd-adafruit/cores/arduino",
@@ -27,6 +26,7 @@
                 "C:/Users/jlaus/.platformio/packages/framework-arduino-samd-adafruit/libraries/SDU/src",
                 "C:/Users/jlaus/.platformio/packages/framework-arduino-samd-adafruit/libraries/SPI",
                 "C:/Users/jlaus/.platformio/packages/framework-arduino-samd-adafruit/libraries/Servo/src",
+                "C:/Users/jlaus/.platformio/packages/framework-arduino-samd-adafruit/libraries/USBHost/src",
                 "C:/Users/jlaus/.platformio/packages/framework-arduino-samd-adafruit/libraries/Wire",
                 ""
             ],
@@ -36,7 +36,6 @@
                     "c:/Users/jlaus/Documents/Arduino/laser/include",
                     "c:/Users/jlaus/Documents/Arduino/laser/src",
                     "c:/Users/jlaus/Documents/Arduino/laser/lib/Timer",
-                    "C:/Users/jlaus/.platformio/packages/framework-arduino-samd-adafruit/libraries/USBHost/src",
                     "C:/Users/jlaus/.platformio/packages/framework-cmsis/CMSIS/Core/Include",
                     "C:/Users/jlaus/.platformio/packages/framework-cmsis-atmel/CMSIS/Device/ATMEL",
                     "C:/Users/jlaus/.platformio/packages/framework-arduino-samd-adafruit/cores/arduino",
@@ -52,6 +51,7 @@
                     "C:/Users/jlaus/.platformio/packages/framework-arduino-samd-adafruit/libraries/SDU/src",
                     "C:/Users/jlaus/.platformio/packages/framework-arduino-samd-adafruit/libraries/SPI",
                     "C:/Users/jlaus/.platformio/packages/framework-arduino-samd-adafruit/libraries/Servo/src",
+                    "C:/Users/jlaus/.platformio/packages/framework-arduino-samd-adafruit/libraries/USBHost/src",
                     "C:/Users/jlaus/.platformio/packages/framework-arduino-samd-adafruit/libraries/Wire",
                     ""
                 ]

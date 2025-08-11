@@ -1,4 +1,8 @@
+
+
 #include "main.h"
+
+#define USE_SERIAL1_NOT
 
 void pulse10(const int num_pulses)
 {
@@ -69,7 +73,7 @@ void pwmSetup(uint32_t pin, uint32_t value)
         while (TCx->COUNT8.SYNCBUSY.bit.ENABLE);
     } 
     else {
-        int divider = pin > 5 ? TCC_CTRLA_PRESCALER_DIV1 | TCC_CTRLA_PRESCSYNC_GCLK : TCC_CTRLA_PRESCALER_DIV8 | TCC_CTRLA_PRESCSYNC_GCLK;
+        int divider = pin > 5 ? TCC_CTRLA_PRESCALER_DIV1 | TCC_CTRLA_PRESCSYNC_GCLK : TCC_CTRLA_PRESCALER_DIV2 | TCC_CTRLA_PRESCSYNC_GCLK;
         Tcc *TCCx = (Tcc *)GetTC(pinDesc.ulPWMChannel);
         TCCx->CTRLA.bit.SWRST = 1;
         while (TCCx->SYNCBUSY.bit.SWRST);
@@ -132,15 +136,6 @@ inline void unpack(volatile Data *i, uint8_t *tmp)
     i->audio_r = (uint16_t)(tmp[6] >> 4) | (((uint16_t)tmp[7]) << 4);
     i->empty = false;
 
-    // pull out the timestamp
-    // i->t = tmp[8] | 
-    //         ((uint16_t)tmp[9 ] << 8 ) | 
-    //         ((uint32_t)tmp[10] << 16);// | 
-            // ((uint32_t)tmp[11] << 24) | 
-            // ((uint64_t)tmp[12] << 32) | 
-            // ((uint64_t)tmp[13] << 40) | 
-            // ((uint64_t)tmp[14] << 48) | 
-            // ((uint64_t)tmp[15] << 56);
 }
 
 inline void wait_for_empty_array()
@@ -160,13 +155,18 @@ inline void get_from_serial()
     // 16 iterations
     for (uint16_t c = 0; c < 256;)
     {
-        pin10on;
+        // pin10on;
         // wait for data from the serial port
+#ifdef USE_SERIAL1
+        while (!Serial1.available());
+        Serial1.readBytes(serial_data, 256);
+#else
         while (!Serial.usb.available(CDC_ENDPOINT_OUT));
-        pin10of;
-
         // pull 250 bytes from Serial (maxes out at 256)
         epHandlers[CDC_ENDPOINT_OUT]->recv(serial_data, 256);
+#endif
+        // pin10of;
+
 
         // 25 iterations
         for (uint16_t chunk = 0; chunk < 256; chunk += 8, ++c)
@@ -227,7 +227,9 @@ void setup()
     pwmSetup(6, 150);  
     pwmSetup(12, 150); 
 
+    Serial1.begin(2000000);    // 2 Mbps to match ESP32-S3
     Serial.begin(1000000);
+    Serial1.setTimeout(10); // 10 ms timeout
 
     pinMode(9 , OUTPUT); // debugging pin
     pinMode(10, OUTPUT); // debugging pin
@@ -241,6 +243,8 @@ void setup()
     // setup ISR
     ITimer.attachInterruptInterval(TIMER_INTERVAL_US, TimerHandler);
 }
+
+
 
 void loop()
 {

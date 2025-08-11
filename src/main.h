@@ -76,7 +76,7 @@ Color color = { 90, 130, 70 , 1, 1, 1, 66, 92, 50}; // initial color values
 #endif
 
 
-#define TIMER_INTERVAL_US 20
+#define TIMER_INTERVAL_US 25
 
 // ISR
 SAMDTimer ITimer(SELECTED_TIMER);

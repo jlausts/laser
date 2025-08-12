@@ -93,13 +93,11 @@ volatile bool array_reading = true;
 volatile uint32_t i_count = 0;
 
 
-// 16 bytes (technically)
 typedef struct __attribute__((packed))
 {
     bool empty;
     uint8_t r, g, b;
-    uint16_t laser_x, laser_y, audio_l, audio_r;
-    // uint32_t t;
+    uint16_t laser_x, laser_y;
 } Data;
 
 // one array is read while the other is filled from Serial

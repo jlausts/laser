@@ -106,16 +106,6 @@ inline void write_color(volatile const Data *const info)
     TCCx3->CTRLBCLR.bit.LUPD = 1;
 }
 
-inline void write_audio(volatile const Data *const info)
-{
-    Tcc *const TCCx1 = (Tcc *)GetTC(pinDescs[6].ulPWMChannel);
-    Tcc *const TCCx2 = (Tcc *)GetTC(pinDescs[12].ulPWMChannel);
-    TCCx1->CCBUF[tcChannels[6]].reg = info->audio_l;
-    TCCx2->CCBUF[tcChannels[12]].reg = info->audio_r;
-    TCCx1->CTRLBCLR.bit.LUPD = 1;
-    TCCx2->CTRLBCLR.bit.LUPD = 1;
-}
-
 inline void write_laser(volatile const Data *const info)
 {
     DAC->DATA[0].reg = info->laser_x; 
@@ -125,17 +115,14 @@ inline void write_laser(volatile const Data *const info)
 inline void unpack(volatile Data *i, uint8_t *tmp)
 {
     // rgb is left shifted by 3 because it is 5 bit and we only use the most significant bits.
-    i->r = ( tmp[0] & 0b00011111) << 3 | 0b111;
-    i->g = ((tmp[0] & 0b11100000) >> 2) | ((tmp[1] & 0b00000011) << 6) | 0b111;
-    i->b = ( tmp[1] & 0b01111100) << 1 | 0b111;
+    i->r =   tmp[0] << 3;
+    i->g = ((tmp[0] & 0b11100000) >> 2) | (tmp[1] << 6);
+    i->b =   tmp[1] & 0b11111000;
 
-    // pull out the audio and laser position
+    // pull out laser position
     i->laser_x = (uint16_t)tmp[2] | ((uint16_t)(tmp[3] & 0x0F) << 8);
     i->laser_y = (uint16_t)(tmp[3] >> 4) | (((uint16_t)tmp[4]) << 4);
-    i->audio_l = (uint16_t)tmp[5] | ((uint16_t)(tmp[6] & 0x0F) << 8);
-    i->audio_r = (uint16_t)(tmp[6] >> 4) | (((uint16_t)tmp[7]) << 4);
     i->empty = false;
-
 }
 
 inline void wait_for_empty_array()
@@ -149,29 +136,26 @@ inline void wait_for_empty_array()
 
 inline void get_from_serial()
 {
-    static uint8_t serial_data[256];
+    static uint8_t serial_data[5][256];
     volatile Data *tmp_data = data[!array_reading];
 
-    // 16 iterations
-    for (uint16_t c = 0; c < 256;)
+    for (uint8_t b = 0; b < 5; ++b)
     {
-        // pin10on;
+        pin10on;
         // wait for data from the serial port
 #ifdef USE_SERIAL1
         while (!Serial1.available());
-        Serial1.readBytes(serial_data, 256);
+        Serial1.readBytes(serial_data, 255);
 #else
         while (!Serial.usb.available(CDC_ENDPOINT_OUT));
-        // pull 250 bytes from Serial (maxes out at 256)
-        epHandlers[CDC_ENDPOINT_OUT]->recv(serial_data, 256);
+        epHandlers[CDC_ENDPOINT_OUT]->recv(serial_data[b], 255); // pull 255 bytes from Serial (maxes out at 256)
 #endif
-        // pin10of;
-
-
-        // 25 iterations
-        for (uint16_t chunk = 0; chunk < 256; chunk += 8, ++c)
-            unpack(&tmp_data[c], &serial_data[chunk]);
+        pin10of;
     }  
+
+    for (uint8_t c = 0, b = 0; b < 5; ++b)
+        for (uint8_t chunk = 0; chunk < 255; chunk += 5, ++c)
+            unpack(&tmp_data[c], &serial_data[b][chunk]);
 }
 
 inline void pull_from_serial_to_array()
@@ -186,7 +170,7 @@ void TimerHandler()
     static uint8_t array_count = 0;
 
     // when the uint8 rolls over, switch the arrays
-    if (!array_count)
+    if (array_count == 255)
     {
         array_count = 0;
         array_reading = !array_reading;
@@ -204,7 +188,6 @@ void TimerHandler()
     // write to the ports
     write_color(info);
     write_laser(info);
-    write_audio(info);
 
     // the current array address is nolonger valid
     info->empty = true;

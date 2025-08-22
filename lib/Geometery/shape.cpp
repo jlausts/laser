@@ -35,7 +35,13 @@ void fill_array(const int len, const float *const arr, const uint8_t *const type
     static uint64_t t = 0;
     float amp, p;
     volatile Data *const data_array = data[!array_reading];
-    memset((void*)data_array, 0, sizeof(data[0]));
+
+    for (int j = 0, k = t; j < LEN; ++j, ++k)
+    {
+        data_array[j].laser_x  = 0;
+        data_array[j].laser_y  = 0;
+        data_array[j].empty = false;
+    }
 
     if (first_one)
         t = 0;
@@ -76,17 +82,17 @@ void fill_array(const int len, const float *const arr, const uint8_t *const type
             break;
 
         case XOFF:
-            for (int j = 0, k = t; j < LEN; ++j, ++k)
+            for (int j = 0; j < LEN; ++j)
                 data_array[j].laser_x += arr[i];
             break;
 
         case YOFF:
-            for (int j = 0, k = t; j < LEN; ++j, ++k)
+            for (int j = 0; j < LEN; ++j)
                 data_array[j].laser_y += arr[i];
             break;
 
         case ROTATE:
-            for (int j = 0, k = t; j < LEN; ++j, ++k)
+            for (int j = 0; j < LEN; ++j)
                 rotate_point(&data_array[j], arr[i], arr[i+1], arr[i+2]);
             i += 2;
             break;
@@ -107,18 +113,21 @@ void fill_array(const int len, const float *const arr, const uint8_t *const type
         if (data_array[i].laser_x > MAX_POSITION)
             data_array[i].laser_x = MAX_POSITION;
     }
-    
+
     t += LEN;
+
 }
 
 void test_make_shape(const bool first)
 {
-    float arr[] = {4.1891910e+02, 2.5290594e-01, 2.5134238e+02, 1.2733901e-01,
-       4.1886707e+02, 3.2696864e-01, 2.5140036e+02, 2.8470719e-01,
-       2.5125056e+02, 1.7530885e-01, 8.3829834e+01, 2.4719754e-01,
-       6.0000000e+02, 6.0000000e+02, 255, 255, 255};
+    // float arr[] = {4.1891910e+02, 2.5290594e-01, 2.5134238e+02, 1.2733901e-01, 4.1886707e+02, 3.2696864e-01, 2.5140036e+02, 2.8470719e-01, 2.5125056e+02, 1.7530885e-01, 8.3829834e+01, 2.4719754e-01, 6.0000000e+02, 6.0000000e+02, 255, 255, 255};
+    // uint8_t types[] = {0, 0, 0, 1, 1, 1, 5, 6, 3, 2, 4};
+    const float mul = 1;
+    float arr[] = { 1050.6808 / mul, 0.3179864, 955.0732 / mul, 0.42970395, 
+        1050.593 / mul, 0.25230965, 955.0194 / mul, 0.50079733, 1050.5621 / mul, 0.49920267, 
+        248.0, 152.0, 248.0 };
 
-    uint8_t types[] = {0, 0, 0, 1, 1, 1, 5, 6, 3, 2, 4};
-
+    uint8_t types[] = { 0, 0, 0, 1, 1, 3, 2, 4 };
+        
     fill_array(sizeof(types), arr, types, first);
 }

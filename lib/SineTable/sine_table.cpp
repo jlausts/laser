@@ -1,8 +1,8 @@
 #include "sine_table.h"
 
 #define PI_2 1.5707963267948966
-static const double TAU = 6.283185307179586476925286766559;
-static const double RAD_TO_U16 = 65536.0 / TAU;
+static const float TAU_F = 6.283185307179586f;
+static const float RAD_TO_U16 = 65536.0f / TAU_F;
 
 const float SIN[65536] = {
 0.0,
@@ -65545,11 +65545,13 @@ const float SIN[65536] = {
 
 
 // Fast sine lookup. 
+// if rad is over 2 million, then this function may not work as expected due to overflow (rad * RAD_TO_U16)
 // 16 bit resolution.
 // Uses bit tricks instead of expensive modulo.
 float sine(const float rad)
 {
-    return SIN[(uint16_t)((double)rad * RAD_TO_U16 + 0.5) & 0xFFFF];
+    return SIN[(uint16_t)((float)rad * RAD_TO_U16 + 0.5f) & 0xFFFF];
+    //return SIN[(uint16_t)((remquof(rad, TAU_F, &q) + TAU_F) * RAD_TO_U16 + 0.5f)];
 }
 
 // Fast cosine lookup. 

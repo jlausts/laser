@@ -4,6 +4,7 @@
         "compare": "cpp",
         "cmath": "cpp",
         "unistd.h": "c",
-        "stdint.h": "c"
+        "stdint.h": "c",
+        "shape.h": "c"
     }
 }

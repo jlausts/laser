@@ -3,29 +3,22 @@
 #include "main.h"
 
 #define USE_SERIAL1_NOT
+#define USE_SERIAL_NOT
 volatile uint16_t a5;
+#define BLINK_PIN 13
 
-void blink()
+void blink(int del)
 {
-    constexpr int del = 200;
-    digitalWrite(LED_BUILTIN, HIGH);
-    delay(del);
-    digitalWrite(LED_BUILTIN, LOW);
-    delay(del);
+    digitalWrite(BLINK_PIN, HIGH);
+    delayMicroseconds(del);
+    digitalWrite(BLINK_PIN, LOW);
+    delayMicroseconds(del);
 }
 
-void blink(int count, int del)
-{
-    digitalWrite(LED_BUILTIN, HIGH);
-    delay(del);
-    digitalWrite(LED_BUILTIN, LOW);
-    delay(del);
-}
-
-void blink(const int count)
+void blink(const int count, const int del)
 {
     for (int i = 0; i < count; ++i)
-        blink();
+        blink(del);
 }
 
 inline void pwmSetup(uint32_t pin, uint32_t value)
@@ -151,6 +144,14 @@ inline void pull_from_serial_to_array()
     get_from_serial();
 }
 
+inline void generate_shape(const bool first)
+{
+    wait_for_empty_array();
+    pin9on;
+    test_make_shape(first);
+    pin9of;
+}
+
 static inline void setupADC_A5(void)
 {
     Adc *const adc = ADC0;
@@ -235,13 +236,15 @@ void TimerHandler()
     // when this gets to 255, it will switch to the other data array, and the empty one will get filled
     static uint8_t array_count = 0;
 
-    startReadA5();
+    // startReadA5();
 
     // when the uint8 rolls over, switch the arrays
     if (array_count == 255)
     {
         array_count = 0;
         array_reading = !array_reading;
+        pin10on;
+        pin10of;
     }
 
     // adjust pointer
@@ -259,7 +262,7 @@ void TimerHandler()
     // the current array address is nolonger valid
     info->empty = true;
     array_count++;
-    finishReadA5(&a5);
+    // finishReadA5(&a5);
 
 }
 
@@ -282,8 +285,8 @@ void setup()
     Serial1.setTimeout(10); // 10 ms timeout
 #else
     Serial.begin(1000000);
-    while(!Serial);
-    while(!Serial.available());
+    // while(!Serial);
+    // while(!Serial.available());
 #endif
 
     pinMode(9 , OUTPUT); // debugging pin
@@ -291,20 +294,28 @@ void setup()
     pinMode(11, OUTPUT); // debugging pin
     pinMode(13, OUTPUT); // debugging pin
 
+#ifdef USE_SERIAL
     get_from_serial(); 
     array_reading = !array_reading;
     get_from_serial(); 
-
+#else
+    test_make_shape(true);
+    array_reading = !array_reading;
+    test_make_shape(false);
+#endif
+    pin10on;
+    pin10of;
     // setup ISR
     ITimer.attachInterruptInterval(TIMER_INTERVAL_US, TimerHandler);
 }
 
 void loop()
 {
-    // while (!a5);
-    // Serial.println(a5);
-    // a5 = 0;
-    Serial.println(sine(4));
+    
+#ifdef USE_SERIAL
     pull_from_serial_to_array(); 
+#else
+    generate_shape(false);
+#endif
 }
 

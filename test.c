@@ -65553,13 +65553,16 @@ float sine(const float rad)
 {
     return SIN[(uint16_t)((double)rad * RAD_TO_U16 + 0.5) & 0xFFFF];
 }
-
+float cosine(const float rad)
+{
+    return SIN[(uint16_t)((double)(rad + 1.5707963267948966) * RAD_TO_U16 + 0.5) & 0xFFFF];
+}
 void main()
 {
     FILE *fp = fopen("t", "w");
     for (float i = 0; i < TAU*5; i += 0.001)
     {
-        fprintf(fp, "%f\n", sine(i));
+        fprintf(fp, "%f\n", cosine(i));
     }
     fclose(fp);
 }

@@ -10,6 +10,7 @@
             "includePath": [
                 "c:/Users/jlaus/Documents/Arduino/laser/include",
                 "c:/Users/jlaus/Documents/Arduino/laser/src",
+                "c:/Users/jlaus/Documents/Arduino/laser/lib/SineTable",
                 "c:/Users/jlaus/Documents/Arduino/laser/lib/Timer",
                 "C:/Users/jlaus/.platformio/packages/framework-cmsis/CMSIS/Core/Include",
                 "C:/Users/jlaus/.platformio/packages/framework-cmsis-atmel/CMSIS/Device/ATMEL",
@@ -35,6 +36,7 @@
                 "path": [
                     "c:/Users/jlaus/Documents/Arduino/laser/include",
                     "c:/Users/jlaus/Documents/Arduino/laser/src",
+                    "c:/Users/jlaus/Documents/Arduino/laser/lib/SineTable",
                     "c:/Users/jlaus/Documents/Arduino/laser/lib/Timer",
                     "C:/Users/jlaus/.platformio/packages/framework-cmsis/CMSIS/Core/Include",
                     "C:/Users/jlaus/.platformio/packages/framework-cmsis-atmel/CMSIS/Device/ATMEL",

@@ -3,9 +3,7 @@
 #include "main.h"
 
 #define USE_SERIAL1_NOT
-#define SIZE 1000
 volatile uint16_t a5;
-volatile long t = 0;
 
 void blink()
 {
@@ -238,7 +236,6 @@ void TimerHandler()
     static uint8_t array_count = 0;
 
     startReadA5();
-    t++;
 
     // when the uint8 rolls over, switch the arrays
     if (array_count == 255)

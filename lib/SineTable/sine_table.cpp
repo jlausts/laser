@@ -65545,7 +65545,7 @@ const float SIN[65536] = {
 // Fast sine lookup. 
 // 16 bit resolution.
 // Uses bit tricks instead of expensive modulo.
-inline float sine(const float rad)
+float sine(const float rad)
 {
     return SIN[(uint16_t)((double)rad * RAD_TO_U16 + 0.5) & 0xFFFF];
 }

@@ -250,8 +250,6 @@ void TimerHandler()
     // adjust pointer
     volatile Data *const info = &data[array_reading][array_count];
 
-    finishReadA5(&a5);
-
     // return if the timestamp has not matched the requirement
     // return if the info has already been used
     if (info->empty)
@@ -264,6 +262,7 @@ void TimerHandler()
     // the current array address is nolonger valid
     info->empty = true;
     array_count++;
+    finishReadA5(&a5);
 
 }
 
@@ -308,7 +307,7 @@ void loop()
     // while (!a5);
     // Serial.println(a5);
     // a5 = 0;
-
+    Serial.println(sine(4));
     pull_from_serial_to_array(); 
 }
 

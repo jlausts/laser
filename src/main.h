@@ -1,7 +1,7 @@
 #include <Arduino.h>
 #include "wiring_private.h"          
 #include "SAMDTimerInterrupt.h"
-#include "sin_table.h"
+#include "sine_table.h"
 #include <sam.h>
 
 

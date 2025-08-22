@@ -1,6 +1,7 @@
 #include <Arduino.h>
 #include "wiring_private.h"          
 #include "SAMDTimerInterrupt.h"
+#include <sam.h>
 
 
 #define DAC_PIN0 A0                   // only A0 has the DAC

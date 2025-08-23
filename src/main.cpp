@@ -319,3 +319,9 @@ void loop()
 #endif
 }
 
+// todo
+/*
+    * generate random shapes like how python does.
+    * use sine function to modulate the amplitude.
+    * basically, just import all python and c code on the the SAMD51
+*/

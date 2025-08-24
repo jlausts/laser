@@ -1,8 +1,11 @@
+
 #include <Arduino.h>
 #include "wiring_private.h"          
 #include "SAMDTimerInterrupt.h"
 // #include "sine_table.h"
 #include "shape.h"
+#include "chord.h"
+
 #include <sam.h>
 
 
@@ -54,7 +57,6 @@ Color color = { 90, 130, 70 , 1, 1, 1, 66, 92, 50}; // initial color values
 
 
 
-
 #define USING_TIMER_TC3         true      // Only TC3 can be used for SAMD51
 #define USING_TIMER_TC4         false     // Not to use with Servo library
 #define USING_TIMER_TC5         false
@@ -96,12 +98,6 @@ volatile bool array_reading = true;
 volatile uint32_t i_count = 0;
 
 
-typedef struct __attribute__((packed))
-{
-    bool empty;
-    uint8_t r, g, b;
-    uint16_t laser_x, laser_y;
-} Data;
 
 // one array is read while the other is filled from Serial
 volatile Data data[2][256] = {0};

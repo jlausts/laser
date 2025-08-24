@@ -12,56 +12,58 @@
 #define OFFSET data_array[j].laser_x += input_data->laser_x;\
                data_array[j].laser_y += input_data->laser_y;
 
-#define SET_Y5 data_array[j].laser_y = (uint16_t)((sine(k * yhz[0]) + 1) * yamp[0] + 0.5f)\
-                                     + (uint16_t)((sine(k * yhz[1]) + 1) * yamp[1] + 0.5f)\
-                                     + (uint16_t)((sine(k * yhz[2]) + 1) * yamp[2] + 0.5f)\
-                                     + (uint16_t)((sine(k * yhz[3]) + 1) * yamp[3] + 0.5f)\
-                                     + (uint16_t)((sine(k * yhz[3]) + 1) * yamp[4] + 0.5f);
+#define CLAMP if (data_array[j].laser_y > MAX_POSITION) data_array[j].laser_y = MAX_POSITION;\
+              if (data_array[j].laser_x > MAX_POSITION) data_array[j].laser_x = MAX_POSITION;
 
-#define SET_Y4 data_array[j].laser_y = (uint16_t)((sine(k * yhz[0]) + 1) * yamp[0] + 0.5f)\
-                                     + (uint16_t)((sine(k * yhz[1]) + 1) * yamp[1] + 0.5f)\
-                                     + (uint16_t)((sine(k * yhz[2]) + 1) * yamp[2] + 0.5f)\
-                                     + (uint16_t)((sine(k * yhz[3]) + 1) * yamp[3] + 0.5f);
+#define ROTATE_CLAMP rotate_point_and_clamp(&data_array[j], rotate_angle, cx, cy);
+
+#define SET_Y5 data_array[j].laser_y = (uint16_t)((sine(k * yhz[0])) * yamp[0] + 0.5f)\
+                                     + (uint16_t)((sine(k * yhz[1])) * yamp[1] + 0.5f)\
+                                     + (uint16_t)((sine(k * yhz[2])) * yamp[2] + 0.5f)\
+                                     + (uint16_t)((sine(k * yhz[3])) * yamp[3] + 0.5f)\
+                                     + (uint16_t)((sine(k * yhz[3])) * yamp[4] + 0.5f);
+
+#define SET_Y4 data_array[j].laser_y = (uint16_t)((sine(k * yhz[0])) * yamp[0] + 0.5f)\
+                                     + (uint16_t)((sine(k * yhz[1])) * yamp[1] + 0.5f)\
+                                     + (uint16_t)((sine(k * yhz[2])) * yamp[2] + 0.5f)\
+                                     + (uint16_t)((sine(k * yhz[3])) * yamp[3] + 0.5f);
                                      
-#define SET_Y3 data_array[j].laser_y = (uint16_t)((sine(k * yhz[0]) + 1) * yamp[0] + 0.5f)\
-                                     + (uint16_t)((sine(k * yhz[1]) + 1) * yamp[1] + 0.5f)\
-                                     + (uint16_t)((sine(k * yhz[2]) + 1) * yamp[2] + 0.5f);
+#define SET_Y3 data_array[j].laser_y = (uint16_t)((sine(k * yhz[0])) * yamp[0] + 0.5f)\
+                                     + (uint16_t)((sine(k * yhz[1])) * yamp[1] + 0.5f)\
+                                     + (uint16_t)((sine(k * yhz[2])) * yamp[2] + 0.5f);
                                      
-#define SET_Y2 data_array[j].laser_y = (uint16_t)((sine(k * yhz[0]) + 1) * yamp[0] + 0.5f)\
-                                     + (uint16_t)((sine(k * yhz[1]) + 1) * yamp[1] + 0.5f);
+#define SET_Y2 data_array[j].laser_y = (uint16_t)((sine(k * yhz[0])) * yamp[0] + 0.5f)\
+                                     + (uint16_t)((sine(k * yhz[1])) * yamp[1] + 0.5f);
                                      
-#define SET_Y1 data_array[j].laser_y = (uint16_t)((sine(k * yhz[0]) + 1) * yamp[0] + 0.5f);
+#define SET_Y1 data_array[j].laser_y = (uint16_t)((sine(k * yhz[0])) * yamp[0] + 0.5f);
 
 
 
-#define SET_X5 data_array[j].laser_x = (uint16_t)((sine(k * xhz[0]) + 1) * xamp[0] + 0.5f)\
-                                     + (uint16_t)((sine(k * xhz[1]) + 1) * xamp[1] + 0.5f)\
-                                     + (uint16_t)((sine(k * xhz[2]) + 1) * xamp[2] + 0.5f)\
-                                     + (uint16_t)((sine(k * xhz[3]) + 1) * xamp[3] + 0.5f)\
-                                     + (uint16_t)((sine(k * xhz[3]) + 1) * xamp[4] + 0.5f);
+#define SET_X5 data_array[j].laser_x = (uint16_t)((sine(k * xhz[0])) * xamp[0] + 0.5f)\
+                                     + (uint16_t)((sine(k * xhz[1])) * xamp[1] + 0.5f)\
+                                     + (uint16_t)((sine(k * xhz[2])) * xamp[2] + 0.5f)\
+                                     + (uint16_t)((sine(k * xhz[3])) * xamp[3] + 0.5f)\
+                                     + (uint16_t)((sine(k * xhz[3])) * xamp[4] + 0.5f);
 
-#define SET_X4 data_array[j].laser_x = (uint16_t)((sine(k * xhz[0]) + 1) * xamp[0] + 0.5f)\
-                                     + (uint16_t)((sine(k * xhz[1]) + 1) * xamp[1] + 0.5f)\
-                                     + (uint16_t)((sine(k * xhz[2]) + 1) * xamp[2] + 0.5f)\
-                                     + (uint16_t)((sine(k * xhz[3]) + 1) * xamp[3] + 0.5f);
+#define SET_X4 data_array[j].laser_x = (uint16_t)((sine(k * xhz[0])) * xamp[0] + 0.5f)\
+                                     + (uint16_t)((sine(k * xhz[1])) * xamp[1] + 0.5f)\
+                                     + (uint16_t)((sine(k * xhz[2])) * xamp[2] + 0.5f)\
+                                     + (uint16_t)((sine(k * xhz[3])) * xamp[3] + 0.5f);
                                      
-#define SET_X3 data_array[j].laser_x = (uint16_t)((sine(k * xhz[0]) + 1) * xamp[0] + 0.5f)\
-                                     + (uint16_t)((sine(k * xhz[1]) + 1) * xamp[1] + 0.5f)\
-                                     + (uint16_t)((sine(k * xhz[2]) + 1) * xamp[2] + 0.5f);
+#define SET_X3 data_array[j].laser_x = (uint16_t)((sine(k * xhz[0])) * xamp[0] + 0.5f)\
+                                     + (uint16_t)((sine(k * xhz[1])) * xamp[1] + 0.5f)\
+                                     + (uint16_t)((sine(k * xhz[2])) * xamp[2] + 0.5f);
                                      
-#define SET_X2 data_array[j].laser_x = (uint16_t)((sine(k * xhz[0]) + 1) * xamp[0] + 0.5f)\
-                                     + (uint16_t)((sine(k * xhz[1]) + 1) * xamp[1] + 0.5f);
+#define SET_X2 data_array[j].laser_x = (uint16_t)((sine(k * xhz[0])) * xamp[0] + 0.5f)\
+                                     + (uint16_t)((sine(k * xhz[1])) * xamp[1] + 0.5f);
                                      
-#define SET_X1 data_array[j].laser_x = (uint16_t)((sine(k * xhz[0]) + 1) * xamp[0] + 0.5f);
+#define SET_X1 data_array[j].laser_x = (uint16_t)((sine(k * xhz[0])) * xamp[0] + 0.5f);
 
 
+#define pin10on {digitalWrite(10, HIGH);}//PORT->Group[PORTA].OUTSET.reg = PORT_PA20
+#define pin10of {digitalWrite(10, LOW);}//PORT->Group[PORTA].OUTCLR.reg = PORT_PA20
 
-typedef struct __attribute__((packed))
-{
-    bool empty;
-    uint8_t r, g, b;
-    uint16_t laser_x, laser_y;
-} Data;
+
 
 extern volatile Data data[2][256];
 extern volatile bool array_reading;
@@ -88,144 +90,282 @@ void rotate_point_and_clamp(volatile Data *const data_array, const float angle, 
 void all_combinations(volatile Data *const data_array, const Data *const input_data, 
     const uint8_t x_count, const uint8_t y_count, 
     const uint64_t t, const float *const xhz, const float *const yhz, 
-    const float *const xamp, const float *const yamp)
+    const float *const xamp, const float *const yamp,
+    const float rotate_angle, const float cx, const float cy)
 {
-    if (input_data->laser_x == 0 && input_data->laser_y == 0)
+    if (rotate_angle > 0.001f)
     {
-        switch (x_count << 4 | y_count)
+        // no offset
+        if (input_data->laser_x == 0 && input_data->laser_y == 0)
         {
-        case 1 << 4 | 1:
-            for (int j = 0, k = t; j < LEN; ++j, ++k) { SET_COLOR; SET_X1; SET_Y1; } break;
-        case 1 << 4 | 2:
-            for (int j = 0, k = t; j < LEN; ++j, ++k) { SET_COLOR; SET_X1; SET_Y2; } break;
-        case 1 << 4 | 3:
-            for (int j = 0, k = t; j < LEN; ++j, ++k) { SET_COLOR; SET_X1; SET_Y3; } break;
-        case 1 << 4 | 4:
-            for (int j = 0, k = t; j < LEN; ++j, ++k) { SET_COLOR; SET_X1; SET_Y4; } break;
-        case 1 << 4 | 5:
-            for (int j = 0, k = t; j < LEN; ++j, ++k) { SET_COLOR; SET_X1; SET_Y5; } break;
+            switch (x_count << 4 | y_count)
+            {
+            case 1 << 4 | 1:
+                for (int j = 0, k = t; j < LEN; ++j, ++k) { SET_COLOR; SET_X1; SET_Y1; ROTATE_CLAMP; } break;
+            case 1 << 4 | 2:
+                for (int j = 0, k = t; j < LEN; ++j, ++k) { SET_COLOR; SET_X1; SET_Y2; ROTATE_CLAMP; } break;
+            case 1 << 4 | 3:
+                for (int j = 0, k = t; j < LEN; ++j, ++k) { SET_COLOR; SET_X1; SET_Y3; ROTATE_CLAMP; } break;
+            case 1 << 4 | 4:
+                for (int j = 0, k = t; j < LEN; ++j, ++k) { SET_COLOR; SET_X1; SET_Y4; ROTATE_CLAMP; } break;
+            case 1 << 4 | 5:
+                for (int j = 0, k = t; j < LEN; ++j, ++k) { SET_COLOR; SET_X1; SET_Y5; ROTATE_CLAMP; } break;
 
-        case 2 << 4 | 1:
-            for (int j = 0, k = t; j < LEN; ++j, ++k) { SET_COLOR; SET_X2; SET_Y1; } break;
-        case 2 << 4 | 2:
-            for (int j = 0, k = t; j < LEN; ++j, ++k) { SET_COLOR; SET_X2; SET_Y2; } break;
-        case 2 << 4 | 3:
-            for (int j = 0, k = t; j < LEN; ++j, ++k) { SET_COLOR; SET_X2; SET_Y3; } break;
-        case 2 << 4 | 4:
-            for (int j = 0, k = t; j < LEN; ++j, ++k) { SET_COLOR; SET_X2; SET_Y4; } break;
-        case 2 << 4 | 5:
-            for (int j = 0, k = t; j < LEN; ++j, ++k) { SET_COLOR; SET_X2; SET_Y5; } break;
+            case 2 << 4 | 1:
+                for (int j = 0, k = t; j < LEN; ++j, ++k) { SET_COLOR; SET_X2; SET_Y1; ROTATE_CLAMP; } break;
+            case 2 << 4 | 2:
+                for (int j = 0, k = t; j < LEN; ++j, ++k) { SET_COLOR; SET_X2; SET_Y2; ROTATE_CLAMP; } break;
+            case 2 << 4 | 3:
+                for (int j = 0, k = t; j < LEN; ++j, ++k) { SET_COLOR; SET_X2; SET_Y3; ROTATE_CLAMP; } break;
+            case 2 << 4 | 4:
+                for (int j = 0, k = t; j < LEN; ++j, ++k) { SET_COLOR; SET_X2; SET_Y4; ROTATE_CLAMP; } break;
+            case 2 << 4 | 5:
+                for (int j = 0, k = t; j < LEN; ++j, ++k) { SET_COLOR; SET_X2; SET_Y5; ROTATE_CLAMP; } break;
 
-        case 3 << 4 | 1:
-            for (int j = 0, k = t; j < LEN; ++j, ++k) { SET_COLOR; SET_X3; SET_Y1; } break;
-        case 3 << 4 | 2:
-            for (int j = 0, k = t; j < LEN; ++j, ++k) { SET_COLOR; SET_X3; SET_Y2; } break;
-        case 3 << 4 | 3:
-            for (int j = 0, k = t; j < LEN; ++j, ++k) { SET_COLOR; SET_X3; SET_Y3; } break;
-        case 3 << 4 | 4:
-            for (int j = 0, k = t; j < LEN; ++j, ++k) { SET_COLOR; SET_X3; SET_Y4; } break;
-        case 3 << 4 | 5:
-            for (int j = 0, k = t; j < LEN; ++j, ++k) { SET_COLOR; SET_X3; SET_Y5; } break;
+            case 3 << 4 | 1:
+                for (int j = 0, k = t; j < LEN; ++j, ++k) { SET_COLOR; SET_X3; SET_Y1; ROTATE_CLAMP; } break;
+            case 3 << 4 | 2:
+                for (int j = 0, k = t; j < LEN; ++j, ++k) { SET_COLOR; SET_X3; SET_Y2; ROTATE_CLAMP; } break;
+            case 3 << 4 | 3:
+                for (int j = 0, k = t; j < LEN; ++j, ++k) { SET_COLOR; SET_X3; SET_Y3; ROTATE_CLAMP; } break;
+            case 3 << 4 | 4:
+                for (int j = 0, k = t; j < LEN; ++j, ++k) { SET_COLOR; SET_X3; SET_Y4; ROTATE_CLAMP; } break;
+            case 3 << 4 | 5:
+                for (int j = 0, k = t; j < LEN; ++j, ++k) { SET_COLOR; SET_X3; SET_Y5; ROTATE_CLAMP; } break;
 
-        case 4 << 4 | 1:
-            for (int j = 0, k = t; j < LEN; ++j, ++k) { SET_COLOR; SET_X4; SET_Y1; } break;
-        case 4 << 4 | 2:
-            for (int j = 0, k = t; j < LEN; ++j, ++k) { SET_COLOR; SET_X4; SET_Y2; } break;
-        case 4 << 4 | 3:
-            for (int j = 0, k = t; j < LEN; ++j, ++k) { SET_COLOR; SET_X4; SET_Y3; } break;
-        case 4 << 4 | 4:
-            for (int j = 0, k = t; j < LEN; ++j, ++k) { SET_COLOR; SET_X4; SET_Y4; } break;
-        case 4 << 4 | 5:
-            for (int j = 0, k = t; j < LEN; ++j, ++k) { SET_COLOR; SET_X4; SET_Y5; } break;
+            case 4 << 4 | 1:
+                for (int j = 0, k = t; j < LEN; ++j, ++k) { SET_COLOR; SET_X4; SET_Y1; ROTATE_CLAMP; } break;
+            case 4 << 4 | 2:
+                for (int j = 0, k = t; j < LEN; ++j, ++k) { SET_COLOR; SET_X4; SET_Y2; ROTATE_CLAMP; } break;
+            case 4 << 4 | 3:
+                for (int j = 0, k = t; j < LEN; ++j, ++k) { SET_COLOR; SET_X4; SET_Y3; ROTATE_CLAMP; } break;
+            case 4 << 4 | 4:
+                for (int j = 0, k = t; j < LEN; ++j, ++k) { SET_COLOR; SET_X4; SET_Y4; ROTATE_CLAMP; } break;
+            case 4 << 4 | 5:
+                for (int j = 0, k = t; j < LEN; ++j, ++k) { SET_COLOR; SET_X4; SET_Y5; ROTATE_CLAMP; } break;
 
-        case 5 << 4 | 1:
-            for (int j = 0, k = t; j < LEN; ++j, ++k) { SET_COLOR; SET_X5; SET_Y1; } break;
-        case 5 << 4 | 2:
-            for (int j = 0, k = t; j < LEN; ++j, ++k) { SET_COLOR; SET_X5; SET_Y2; } break;
-        case 5 << 4 | 3:
-            for (int j = 0, k = t; j < LEN; ++j, ++k) { SET_COLOR; SET_X5; SET_Y3; } break;
-        case 5 << 4 | 4:
-            for (int j = 0, k = t; j < LEN; ++j, ++k) { SET_COLOR; SET_X5; SET_Y4; } break;
-        case 5 << 4 | 5:
-            for (int j = 0, k = t; j < LEN; ++j, ++k) { SET_COLOR; SET_X5; SET_Y5; } break;
+            case 5 << 4 | 1:
+                for (int j = 0, k = t; j < LEN; ++j, ++k) { SET_COLOR; SET_X5; SET_Y1; ROTATE_CLAMP; } break;
+            case 5 << 4 | 2:
+                for (int j = 0, k = t; j < LEN; ++j, ++k) { SET_COLOR; SET_X5; SET_Y2; ROTATE_CLAMP; } break;
+            case 5 << 4 | 3:
+                for (int j = 0, k = t; j < LEN; ++j, ++k) { SET_COLOR; SET_X5; SET_Y3; ROTATE_CLAMP; } break;
+            case 5 << 4 | 4:
+                for (int j = 0, k = t; j < LEN; ++j, ++k) { SET_COLOR; SET_X5; SET_Y4; ROTATE_CLAMP; } break;
+            case 5 << 4 | 5:
+                for (int j = 0, k = t; j < LEN; ++j, ++k) { SET_COLOR; SET_X5; SET_Y5; ROTATE_CLAMP; } break;
 
-        default: break;
+            default: break;
+            }
+        }
+        
+        // contains offset. (stored in laser_x&y)
+        else
+        {
+            switch (x_count << 4 | y_count)
+            {
+            case 1 << 4 | 1:
+                for (int j = 0, k = t; j < LEN; ++j, ++k) { SET_COLOR; SET_X1; SET_Y1; OFFSET; ROTATE_CLAMP; } break;
+            case 1 << 4 | 2:
+                for (int j = 0, k = t; j < LEN; ++j, ++k) { SET_COLOR; SET_X1; SET_Y2; OFFSET; ROTATE_CLAMP; } break;
+            case 1 << 4 | 3:
+                for (int j = 0, k = t; j < LEN; ++j, ++k) { SET_COLOR; SET_X1; SET_Y3; OFFSET; ROTATE_CLAMP; } break;
+            case 1 << 4 | 4:
+                for (int j = 0, k = t; j < LEN; ++j, ++k) { SET_COLOR; SET_X1; SET_Y4; OFFSET; ROTATE_CLAMP; } break;
+            case 1 << 4 | 5:
+                for (int j = 0, k = t; j < LEN; ++j, ++k) { SET_COLOR; SET_X1; SET_Y5; OFFSET; ROTATE_CLAMP; } break;
+
+            case 2 << 4 | 1:
+                for (int j = 0, k = t; j < LEN; ++j, ++k) { SET_COLOR; SET_X2; SET_Y1; OFFSET; ROTATE_CLAMP; } break;
+            case 2 << 4 | 2:
+                for (int j = 0, k = t; j < LEN; ++j, ++k) { SET_COLOR; SET_X2; SET_Y2; OFFSET; ROTATE_CLAMP; } break;
+            case 2 << 4 | 3:
+                for (int j = 0, k = t; j < LEN; ++j, ++k) { SET_COLOR; SET_X2; SET_Y3; OFFSET; ROTATE_CLAMP; } break;
+            case 2 << 4 | 4:
+                for (int j = 0, k = t; j < LEN; ++j, ++k) { SET_COLOR; SET_X2; SET_Y4; OFFSET; ROTATE_CLAMP; } break;
+            case 2 << 4 | 5:
+                for (int j = 0, k = t; j < LEN; ++j, ++k) { SET_COLOR; SET_X2; SET_Y5; OFFSET; ROTATE_CLAMP; } break;
+
+            case 3 << 4 | 1:
+                for (int j = 0, k = t; j < LEN; ++j, ++k) { SET_COLOR; SET_X3; SET_Y1; OFFSET; ROTATE_CLAMP; } break;
+            case 3 << 4 | 2:
+                for (int j = 0, k = t; j < LEN; ++j, ++k) { SET_COLOR; SET_X3; SET_Y2; OFFSET; ROTATE_CLAMP; } break;
+            case 3 << 4 | 3:
+                for (int j = 0, k = t; j < LEN; ++j, ++k) { SET_COLOR; SET_X3; SET_Y3; OFFSET; ROTATE_CLAMP; } break;
+            case 3 << 4 | 4:
+                for (int j = 0, k = t; j < LEN; ++j, ++k) { SET_COLOR; SET_X3; SET_Y4; OFFSET; ROTATE_CLAMP; } break;
+            case 3 << 4 | 5:
+                for (int j = 0, k = t; j < LEN; ++j, ++k) { SET_COLOR; SET_X3; SET_Y5; OFFSET; ROTATE_CLAMP; } break;
+
+            case 4 << 4 | 1:
+                for (int j = 0, k = t; j < LEN; ++j, ++k) { SET_COLOR; SET_X4; SET_Y1; OFFSET; ROTATE_CLAMP; } break;
+            case 4 << 4 | 2:
+                for (int j = 0, k = t; j < LEN; ++j, ++k) { SET_COLOR; SET_X4; SET_Y2; OFFSET; ROTATE_CLAMP; } break;
+            case 4 << 4 | 3:
+                for (int j = 0, k = t; j < LEN; ++j, ++k) { SET_COLOR; SET_X4; SET_Y3; OFFSET; ROTATE_CLAMP; } break;
+            case 4 << 4 | 4:
+                for (int j = 0, k = t; j < LEN; ++j, ++k) { SET_COLOR; SET_X4; SET_Y4; OFFSET; ROTATE_CLAMP; } break;
+            case 4 << 4 | 5:
+                for (int j = 0, k = t; j < LEN; ++j, ++k) { SET_COLOR; SET_X4; SET_Y5; OFFSET; ROTATE_CLAMP; } break;
+
+            case 5 << 4 | 1:
+                for (int j = 0, k = t; j < LEN; ++j, ++k) { SET_COLOR; SET_X5; SET_Y1; OFFSET; ROTATE_CLAMP; } break;
+            case 5 << 4 | 2:
+                for (int j = 0, k = t; j < LEN; ++j, ++k) { SET_COLOR; SET_X5; SET_Y2; OFFSET; ROTATE_CLAMP; } break;
+            case 5 << 4 | 3:
+                for (int j = 0, k = t; j < LEN; ++j, ++k) { SET_COLOR; SET_X5; SET_Y3; OFFSET; ROTATE_CLAMP; } break;
+            case 5 << 4 | 4:
+                for (int j = 0, k = t; j < LEN; ++j, ++k) { SET_COLOR; SET_X5; SET_Y4; OFFSET; ROTATE_CLAMP; } break;
+            case 5 << 4 | 5:
+                for (int j = 0, k = t; j < LEN; ++j, ++k) { SET_COLOR; SET_X5; SET_Y5; OFFSET; ROTATE_CLAMP; } break;
+
+            default: break;
+            }
         }
     }
     else
     {
-        switch (x_count << 4 | y_count)
+        // no offset.
+        if (input_data->laser_x == 0 && input_data->laser_y == 0)
         {
-        case 1 << 4 | 1:
-            for (int j = 0, k = t; j < LEN; ++j, ++k) { SET_COLOR; SET_X1; SET_Y1; OFFSET; } break;
-        case 1 << 4 | 2:
-            for (int j = 0, k = t; j < LEN; ++j, ++k) { SET_COLOR; SET_X1; SET_Y2; OFFSET; } break;
-        case 1 << 4 | 3:
-            for (int j = 0, k = t; j < LEN; ++j, ++k) { SET_COLOR; SET_X1; SET_Y3; OFFSET; } break;
-        case 1 << 4 | 4:
-            for (int j = 0, k = t; j < LEN; ++j, ++k) { SET_COLOR; SET_X1; SET_Y4; OFFSET; } break;
-        case 1 << 4 | 5:
-            for (int j = 0, k = t; j < LEN; ++j, ++k) { SET_COLOR; SET_X1; SET_Y5; OFFSET; } break;
+            switch (x_count << 4 | y_count)
+            {
+            case 1 << 4 | 1:
+                for (int j = 0, k = t; j < LEN; ++j, ++k) { SET_COLOR; SET_X1; SET_Y1; CLAMP; } break;
+            case 1 << 4 | 2:
+                for (int j = 0, k = t; j < LEN; ++j, ++k) { SET_COLOR; SET_X1; SET_Y2; CLAMP; } break;
+            case 1 << 4 | 3:
+                for (int j = 0, k = t; j < LEN; ++j, ++k) { SET_COLOR; SET_X1; SET_Y3; CLAMP; } break;
+            case 1 << 4 | 4:
+                for (int j = 0, k = t; j < LEN; ++j, ++k) { SET_COLOR; SET_X1; SET_Y4; CLAMP; } break;
+            case 1 << 4 | 5:
+                for (int j = 0, k = t; j < LEN; ++j, ++k) { SET_COLOR; SET_X1; SET_Y5; CLAMP; } break;
 
-        case 2 << 4 | 1:
-            for (int j = 0, k = t; j < LEN; ++j, ++k) { SET_COLOR; SET_X2; SET_Y1; OFFSET; } break;
-        case 2 << 4 | 2:
-            for (int j = 0, k = t; j < LEN; ++j, ++k) { SET_COLOR; SET_X2; SET_Y2; OFFSET; } break;
-        case 2 << 4 | 3:
-            for (int j = 0, k = t; j < LEN; ++j, ++k) { SET_COLOR; SET_X2; SET_Y3; OFFSET; } break;
-        case 2 << 4 | 4:
-            for (int j = 0, k = t; j < LEN; ++j, ++k) { SET_COLOR; SET_X2; SET_Y4; OFFSET; } break;
-        case 2 << 4 | 5:
-            for (int j = 0, k = t; j < LEN; ++j, ++k) { SET_COLOR; SET_X2; SET_Y5; OFFSET; } break;
+            case 2 << 4 | 1:
+                for (int j = 0, k = t; j < LEN; ++j, ++k) { SET_COLOR; SET_X2; SET_Y1; CLAMP; } break;
+            case 2 << 4 | 2:
+                for (int j = 0, k = t; j < LEN; ++j, ++k) { SET_COLOR; SET_X2; SET_Y2; CLAMP; } break;
+            case 2 << 4 | 3:
+                for (int j = 0, k = t; j < LEN; ++j, ++k) { SET_COLOR; SET_X2; SET_Y3; CLAMP; } break;
+            case 2 << 4 | 4:
+                for (int j = 0, k = t; j < LEN; ++j, ++k) { SET_COLOR; SET_X2; SET_Y4; CLAMP; } break;
+            case 2 << 4 | 5:
+                for (int j = 0, k = t; j < LEN; ++j, ++k) { SET_COLOR; SET_X2; SET_Y5; CLAMP; } break;
 
-        case 3 << 4 | 1:
-            for (int j = 0, k = t; j < LEN; ++j, ++k) { SET_COLOR; SET_X3; SET_Y1; OFFSET; } break;
-        case 3 << 4 | 2:
-            for (int j = 0, k = t; j < LEN; ++j, ++k) { SET_COLOR; SET_X3; SET_Y2; OFFSET; } break;
-        case 3 << 4 | 3:
-            for (int j = 0, k = t; j < LEN; ++j, ++k) { SET_COLOR; SET_X3; SET_Y3; OFFSET; } break;
-        case 3 << 4 | 4:
-            for (int j = 0, k = t; j < LEN; ++j, ++k) { SET_COLOR; SET_X3; SET_Y4; OFFSET; } break;
-        case 3 << 4 | 5:
-            for (int j = 0, k = t; j < LEN; ++j, ++k) { SET_COLOR; SET_X3; SET_Y5; OFFSET; } break;
+            case 3 << 4 | 1:
+                for (int j = 0, k = t; j < LEN; ++j, ++k) { SET_COLOR; SET_X3; SET_Y1; CLAMP; } break;
+            case 3 << 4 | 2:
+                for (int j = 0, k = t; j < LEN; ++j, ++k) { SET_COLOR; SET_X3; SET_Y2; CLAMP; } break;
+            case 3 << 4 | 3:
+                for (int j = 0, k = t; j < LEN; ++j, ++k) { SET_COLOR; SET_X3; SET_Y3; CLAMP; } break;
+            case 3 << 4 | 4:
+                for (int j = 0, k = t; j < LEN; ++j, ++k) { SET_COLOR; SET_X3; SET_Y4; CLAMP; } break;
+            case 3 << 4 | 5:
+                for (int j = 0, k = t; j < LEN; ++j, ++k) { SET_COLOR; SET_X3; SET_Y5; CLAMP; } break;
 
-        case 4 << 4 | 1:
-            for (int j = 0, k = t; j < LEN; ++j, ++k) { SET_COLOR; SET_X4; SET_Y1; OFFSET; } break;
-        case 4 << 4 | 2:
-            for (int j = 0, k = t; j < LEN; ++j, ++k) { SET_COLOR; SET_X4; SET_Y2; OFFSET; } break;
-        case 4 << 4 | 3:
-            for (int j = 0, k = t; j < LEN; ++j, ++k) { SET_COLOR; SET_X4; SET_Y3; OFFSET; } break;
-        case 4 << 4 | 4:
-            for (int j = 0, k = t; j < LEN; ++j, ++k) { SET_COLOR; SET_X4; SET_Y4; OFFSET; } break;
-        case 4 << 4 | 5:
-            for (int j = 0, k = t; j < LEN; ++j, ++k) { SET_COLOR; SET_X4; SET_Y5; OFFSET; } break;
+            case 4 << 4 | 1:
+                for (int j = 0, k = t; j < LEN; ++j, ++k) { SET_COLOR; SET_X4; SET_Y1; CLAMP; } break;
+            case 4 << 4 | 2:
+                for (int j = 0, k = t; j < LEN; ++j, ++k) { SET_COLOR; SET_X4; SET_Y2; CLAMP; } break;
+            case 4 << 4 | 3:
+                for (int j = 0, k = t; j < LEN; ++j, ++k) { SET_COLOR; SET_X4; SET_Y3; CLAMP; } break;
+            case 4 << 4 | 4:
+                for (int j = 0, k = t; j < LEN; ++j, ++k) { SET_COLOR; SET_X4; SET_Y4; CLAMP; } break;
+            case 4 << 4 | 5:
+                for (int j = 0, k = t; j < LEN; ++j, ++k) { SET_COLOR; SET_X4; SET_Y5; CLAMP; } break;
 
-        case 5 << 4 | 1:
-            for (int j = 0, k = t; j < LEN; ++j, ++k) { SET_COLOR; SET_X5; SET_Y1; OFFSET; } break;
-        case 5 << 4 | 2:
-            for (int j = 0, k = t; j < LEN; ++j, ++k) { SET_COLOR; SET_X5; SET_Y2; OFFSET; } break;
-        case 5 << 4 | 3:
-            for (int j = 0, k = t; j < LEN; ++j, ++k) { SET_COLOR; SET_X5; SET_Y3; OFFSET; } break;
-        case 5 << 4 | 4:
-            for (int j = 0, k = t; j < LEN; ++j, ++k) { SET_COLOR; SET_X5; SET_Y4; OFFSET; } break;
-        case 5 << 4 | 5:
-            for (int j = 0, k = t; j < LEN; ++j, ++k) { SET_COLOR; SET_X5; SET_Y5; OFFSET; } break;
+            case 5 << 4 | 1:
+                for (int j = 0, k = t; j < LEN; ++j, ++k) { SET_COLOR; SET_X5; SET_Y1; CLAMP; } break;
+            case 5 << 4 | 2:
+                for (int j = 0, k = t; j < LEN; ++j, ++k) { SET_COLOR; SET_X5; SET_Y2; CLAMP; } break;
+            case 5 << 4 | 3:
+                for (int j = 0, k = t; j < LEN; ++j, ++k) { SET_COLOR; SET_X5; SET_Y3; CLAMP; } break;
+            case 5 << 4 | 4:
+                for (int j = 0, k = t; j < LEN; ++j, ++k) { SET_COLOR; SET_X5; SET_Y4; CLAMP; } break;
+            case 5 << 4 | 5:
+                for (int j = 0, k = t; j < LEN; ++j, ++k) { SET_COLOR; SET_X5; SET_Y5; CLAMP; } break;
 
-        default: break;
+            default: break;
+            }
+        }
+        
+        // contains offset. (stored in laser_x&y)
+        else
+        {
+            switch (x_count << 4 | y_count)
+            {
+            case 1 << 4 | 1:
+                for (int j = 0, k = t; j < LEN; ++j, ++k) { SET_COLOR; SET_X1; SET_Y1; OFFSET; CLAMP; } break;
+            case 1 << 4 | 2:
+                for (int j = 0, k = t; j < LEN; ++j, ++k) { SET_COLOR; SET_X1; SET_Y2; OFFSET; CLAMP; } break;
+            case 1 << 4 | 3:
+                for (int j = 0, k = t; j < LEN; ++j, ++k) { SET_COLOR; SET_X1; SET_Y3; OFFSET; CLAMP; } break;
+            case 1 << 4 | 4:
+                for (int j = 0, k = t; j < LEN; ++j, ++k) { SET_COLOR; SET_X1; SET_Y4; OFFSET; CLAMP; } break;
+            case 1 << 4 | 5:
+                for (int j = 0, k = t; j < LEN; ++j, ++k) { SET_COLOR; SET_X1; SET_Y5; OFFSET; CLAMP; } break;
+
+            case 2 << 4 | 1:
+                for (int j = 0, k = t; j < LEN; ++j, ++k) { SET_COLOR; SET_X2; SET_Y1; OFFSET; CLAMP; } break;
+            case 2 << 4 | 2:
+                for (int j = 0, k = t; j < LEN; ++j, ++k) { SET_COLOR; SET_X2; SET_Y2; OFFSET; CLAMP; } break;
+            case 2 << 4 | 3:
+                for (int j = 0, k = t; j < LEN; ++j, ++k) { SET_COLOR; SET_X2; SET_Y3; OFFSET; CLAMP; } break;
+            case 2 << 4 | 4:
+                for (int j = 0, k = t; j < LEN; ++j, ++k) { SET_COLOR; SET_X2; SET_Y4; OFFSET; CLAMP; } break;
+            case 2 << 4 | 5:
+                for (int j = 0, k = t; j < LEN; ++j, ++k) { SET_COLOR; SET_X2; SET_Y5; OFFSET; CLAMP; } break;
+
+            case 3 << 4 | 1:
+                for (int j = 0, k = t; j < LEN; ++j, ++k) { SET_COLOR; SET_X3; SET_Y1; OFFSET; CLAMP; } break;
+            case 3 << 4 | 2:
+                for (int j = 0, k = t; j < LEN; ++j, ++k) { SET_COLOR; SET_X3; SET_Y2; OFFSET; CLAMP; } break;
+            case 3 << 4 | 3:
+                for (int j = 0, k = t; j < LEN; ++j, ++k) { SET_COLOR; SET_X3; SET_Y3; OFFSET; CLAMP; } break;
+            case 3 << 4 | 4:
+                for (int j = 0, k = t; j < LEN; ++j, ++k) { SET_COLOR; SET_X3; SET_Y4; OFFSET; CLAMP; } break;
+            case 3 << 4 | 5:
+                for (int j = 0, k = t; j < LEN; ++j, ++k) { SET_COLOR; SET_X3; SET_Y5; OFFSET; CLAMP; } break;
+
+            case 4 << 4 | 1:
+                for (int j = 0, k = t; j < LEN; ++j, ++k) { SET_COLOR; SET_X4; SET_Y1; OFFSET; CLAMP; } break;
+            case 4 << 4 | 2:
+                for (int j = 0, k = t; j < LEN; ++j, ++k) { SET_COLOR; SET_X4; SET_Y2; OFFSET; CLAMP; } break;
+            case 4 << 4 | 3:
+                for (int j = 0, k = t; j < LEN; ++j, ++k) { SET_COLOR; SET_X4; SET_Y3; OFFSET; CLAMP; } break;
+            case 4 << 4 | 4:
+                for (int j = 0, k = t; j < LEN; ++j, ++k) { SET_COLOR; SET_X4; SET_Y4; OFFSET; CLAMP; } break;
+            case 4 << 4 | 5:
+                for (int j = 0, k = t; j < LEN; ++j, ++k) { SET_COLOR; SET_X4; SET_Y5; OFFSET; CLAMP; } break;
+
+            case 5 << 4 | 1:
+                for (int j = 0, k = t; j < LEN; ++j, ++k) { SET_COLOR; SET_X5; SET_Y1; OFFSET; CLAMP; } break;
+            case 5 << 4 | 2:
+                for (int j = 0, k = t; j < LEN; ++j, ++k) { SET_COLOR; SET_X5; SET_Y2; OFFSET; CLAMP; } break;
+            case 5 << 4 | 3:
+                for (int j = 0, k = t; j < LEN; ++j, ++k) { SET_COLOR; SET_X5; SET_Y3; OFFSET; CLAMP; } break;
+            case 5 << 4 | 4:
+                for (int j = 0, k = t; j < LEN; ++j, ++k) { SET_COLOR; SET_X5; SET_Y4; OFFSET; CLAMP; } break;
+            case 5 << 4 | 5:
+                for (int j = 0, k = t; j < LEN; ++j, ++k) { SET_COLOR; SET_X5; SET_Y5; OFFSET; CLAMP; } break;
+
+            default: break;
+            }
         }
     }
 }
 
-void fill_array(const int len, const float *const arr, const uint8_t *const types, 
-    const Data *const input_data, bool first_one)
+void fill_array(const int len, const float *const arr, 
+    const uint8_t *const types, const Data *const input_data, bool first_one)
 {
-    static uint64_t t = 0;
     volatile Data *const data_array = data[!array_reading];
     static float xhz[5], yhz[5], xamp[5], yamp[5];
     float rotate_angle = 0, cx = 0, cy = 0;
     uint8_t x_count = 0, y_count = 0;
+    static uint64_t t = 0;
 
-    for (int i = 0, type = 0; type < len; ++i, type++)
+    // unpack types and their variables
+    for (int i = 0, type = 0; type < len; i++, type++)
     {
         switch (types[type])
         {
@@ -250,34 +390,30 @@ void fill_array(const int len, const float *const arr, const uint8_t *const type
         }
     }
 
-    if (first_one)
-        t = 0;
+    if (first_one) t = 0;
 
     // calculate the position for each timestamp for any combination of xhz and yhz.
-    all_combinations(data_array, input_data, x_count, y_count, t, xhz, yhz, xamp, yamp);
+    all_combinations(data_array, input_data, x_count, y_count, 
+        t, xhz, yhz, xamp, yamp, rotate_angle, cx, cy);
+
     t += LEN;
-
-    // rotate and clamp values
-    if (rotate_angle > 0.001)
-        for (int i = 0; i < LEN; ++i)
-            rotate_point_and_clamp(&data_array[i], rotate_angle, cx, cy);
-
-    // just clamp values
-    else
-    {
-        for (int i = 0; i < LEN; ++i)
-        {
-            if (data_array[i].laser_y > MAX_POSITION)
-                data_array[i].laser_y = MAX_POSITION;
-
-            if (data_array[i].laser_x > MAX_POSITION)
-                data_array[i].laser_x = MAX_POSITION;
-        }
-    }
 }
 
-void test_make_shape(const bool first)
+
+/*
+period: 6,375 us (25us * 255)
+2 hz = 268  us (4.2%)
+5 hz = 517  us
+6 hz = 665  us
+10hz = 1000 us
+offset += 30 us
+rotate += 925 us
+
+max time possible: 1945 us (30 %)
+*/
+void test_make_shapeOLD(const bool first)
 {
+    pin10on;
     // float arr[] = {4.1891910e+02, 2.5290594e-01, 2.5134238e+02, 1.2733901e-01, 4.1886707e+02, 3.2696864e-01, 2.5140036e+02, 2.8470719e-01, 2.5125056e+02, 1.7530885e-01, 8.3829834e+01, 2.4719754e-01, 6.0000000e+02, 6.0000000e+02, 255, 255, 255};
     // uint8_t types[] = {0, 0, 0, 1, 1, 1, 5, 6, 3, 2, 4};
     const float mul = 1;
@@ -288,4 +424,5 @@ void test_make_shape(const bool first)
     Data tmp = {.r = 152, .g = 152, .b = 152, .laser_x = 0, .laser_y = 0};
         
     fill_array(sizeof(types), arr, types, &tmp, first);
+    pin10of;
 }

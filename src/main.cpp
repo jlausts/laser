@@ -3,9 +3,10 @@
 #include "main.h"
 
 #define USE_SERIAL1_NOT
-#define USE_SERIAL_NOT
+#define USE_SERIALfg
 volatile uint16_t a5;
 #define BLINK_PIN 13
+
 
 void blink(int del)
 {
@@ -147,9 +148,7 @@ inline void pull_from_serial_to_array()
 inline void generate_shape(const bool first)
 {
     wait_for_empty_array();
-    pin9on;
-    test_make_shape(first);
-    pin9of;
+    test_make_shapeOLD(first);
 }
 
 static inline void setupADC_A5(void)
@@ -230,21 +229,56 @@ static inline void finishReadA5(volatile uint16_t *value)
     *value = (ADC0)->RESULT.reg;
 }
 
-// takes 1.2us
+
+
+void test_make_shape(const bool new_shape)
+{
+    static Data tmp = {.r = 152, .g = 152, .b = 152, .laser_x = 0, .laser_y = 0};
+    static float xhz[5], yhz[5], xamp[5], yamp[5];
+    static float tones[20];
+    static uint8_t types[10];
+    static uint8_t xc, yc, tc;
+
+    if (new_shape)
+    {    
+        tc = 0;
+        uint8_t j = 0;
+        make_chord(xhz, yhz, xamp, yamp, &xc, &yc);
+        for (uint8_t i = 0; i < xc; ++i, j++)
+        {
+            tones[j++] = xhz[i];
+            tones[j] = xamp[i];
+            types[tc++] = 0;
+        }
+        for (uint8_t i = 0; i < yc; ++i, j++)
+        {
+            tones[j++] = yhz[i];
+            tones[j] = yamp[i];
+            types[tc++] = 1;
+        }
+    }
+    fill_array(tc, tones, types, &tmp, new_shape);
+}
+
+
+
+// takes 3.211us
+// runs 12.8% of the time.
 void TimerHandler()
 {
+    // pin10on;
     // when this gets to 255, it will switch to the other data array, and the empty one will get filled
     static uint8_t array_count = 0;
 
-    // startReadA5();
+    startReadA5();
 
     // when the uint8 rolls over, switch the arrays
     if (array_count == 255)
     {
         array_count = 0;
         array_reading = !array_reading;
-        pin10on;
-        pin10of;
+        // pin10on;
+        // pin10of;
     }
 
     // adjust pointer
@@ -262,8 +296,8 @@ void TimerHandler()
     // the current array address is nolonger valid
     info->empty = true;
     array_count++;
-    // finishReadA5(&a5);
-
+    finishReadA5(&a5);
+    // pin10of;
 }
 
 void setup()
@@ -291,8 +325,8 @@ void setup()
 
     pinMode(9 , OUTPUT); // debugging pin
     pinMode(10, OUTPUT); // debugging pin
-    pinMode(11, OUTPUT); // debugging pin
-    pinMode(13, OUTPUT); // debugging pin
+    // pinMode(11, OUTPUT); // debugging pin
+    // pinMode(13, OUTPUT); // debugging pin
 
 #ifdef USE_SERIAL
     get_from_serial(); 
@@ -302,9 +336,8 @@ void setup()
     test_make_shape(true);
     array_reading = !array_reading;
     test_make_shape(false);
+
 #endif
-    pin10on;
-    pin10of;
     // setup ISR
     ITimer.attachInterruptInterval(TIMER_INTERVAL_US, TimerHandler);
 }
@@ -312,6 +345,47 @@ void setup()
 void loop()
 {
     
+    while(1)
+    {
+        pin10on;
+        wait_for_empty_array();
+        test_make_shape(1);
+        pin10of;
+        for (int i = 0; i < 512; ++i)
+        {
+            pin10on;
+            wait_for_empty_array();
+            pin10of;
+            test_make_shape(0);
+        }
+    }
+
+    float xhz[5], yhz[5], xamp[5], yamp[5];
+    uint8_t xc, yc;
+    while (1)
+    {
+        pin10on;
+        make_chord(xhz, yhz, xamp, yamp, &xc, &yc);
+        pin10of;
+        for (int i = 0; i < xc; ++i)
+        {
+            Serial.print(xhz[i]);
+            Serial.print(" ");
+            Serial.print(xamp[i]);
+            Serial.print(",");
+        }
+        Serial.print("   ");
+        for (int i = 0; i < yc; ++i)
+        {
+            Serial.print(yhz[i]);
+            Serial.print(" ");
+            Serial.print(yamp[i]);
+            Serial.print(",");
+        }
+        Serial.println();
+    }
+
+
 #ifdef USE_SERIAL
     pull_from_serial_to_array(); 
 #else

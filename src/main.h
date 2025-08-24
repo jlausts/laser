@@ -47,6 +47,8 @@ typedef struct color {
 Color color = { 90, 130, 70 , 1, 1, 1, 66, 92, 50}; // initial color values
 
 
+
+
 // TCC OK => pin 4, 5, 6, 8, 9, 10, 11, 16/A2, 17/A3
 // TC OK  => pin 12
 // For ITSYBITSY_M4
@@ -97,7 +99,10 @@ volatile bool array_reading = true;
 // increments every time the ISR gets triggered
 volatile uint32_t i_count = 0;
 
-
+#define ISR_HZ 40000
+constexpr float TAU = 6.28318530717958647f;
+constexpr float HZ_MULT = TAU / (double)ISR_HZ;
+constexpr float AMP_MULT = 4095.0 / 2.0;
 
 // one array is read while the other is filled from Serial
 volatile Data data[2][256] = {0};

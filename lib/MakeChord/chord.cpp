@@ -11,6 +11,13 @@ for (uint8_t i = 0; i < *x_count; ++i)\
 for (uint8_t i = 0; i < *y_count; ++i)\
     yhz[i] = hzs[random(hz_count)] + (float)(rand() & 255) / ((255 / MAX_OUT_TUNE) + MAX_OUT_TUNE/2);
 
+#define MULT_AMPLITUDES \
+for (uint8_t i = 0; i < *x_count; ++i){\
+    xamp[i] *= AMP_MULT; xhz[i] *= HZ_MULT;}\
+for (uint8_t i = 0; i < *y_count; ++i){\
+    yamp[i] *= AMP_MULT; yhz[i] *= HZ_MULT;}
+
+
 // 34.5us -> 85.6us
 void make_chord(float *const xhz, float *const yhz, 
     float *const xamp, float *const yamp,
@@ -18,6 +25,10 @@ void make_chord(float *const xhz, float *const yhz,
 {    
     // random hz between 64 and 128 to 1/32 precision
     const float hz = (float)(((uint16_t)rand() & (2048 - 1)) | 1024) / 16.0f;
+
+    static constexpr float TAU = 6.28318530717958647f;
+    static constexpr float HZ_MULT = TAU / 40000.0f;
+    static constexpr float AMP_MULT = 4095.0 / 2.0;
 
     int hz_count = 0;
     static float hzs[16];
@@ -43,6 +54,7 @@ void make_chord(float *const xhz, float *const yhz,
         yamp[1] = 1.0f - yamp[0];
 
         SELECT_RANDOM_HZ;
+        MULT_AMPLITUDES;
         break;
     }
 
@@ -62,6 +74,7 @@ void make_chord(float *const xhz, float *const yhz,
         yamp[1] = 1.0f - yamp[0];
 
         SELECT_RANDOM_HZ;
+        MULT_AMPLITUDES;
         break;
     }
 
@@ -75,12 +88,13 @@ void make_chord(float *const xhz, float *const yhz,
         // between .25 -> .4 
         yamp[0] = (float)(rand() & 255) / 1700 + 0.25f;
         yamp[1] = (float)(rand() & 255) / 1700 + 0.25f;
-        yamp[2] = 1 - (yamp[0] + yamp[1]);
+        yamp[2] = 1.0f - (yamp[0] + yamp[1]);
 
         xamp[0] = (float)(rand() & 255) / 512 + 0.25f;
         xamp[1] = 1.0f - xamp[0];
 
         SELECT_RANDOM_HZ;
+        MULT_AMPLITUDES;
         break;
     }
 
@@ -100,6 +114,7 @@ void make_chord(float *const xhz, float *const yhz,
         yamp[2] = 1 - (yamp[0] + yamp[1]);
 
         SELECT_RANDOM_HZ;
+        MULT_AMPLITUDES;
         break;
     }
 
@@ -119,6 +134,7 @@ void make_chord(float *const xhz, float *const yhz,
         yamp[2] = 1 - (yamp[0] + yamp[1]);
 
         SELECT_RANDOM_HZ;
+        MULT_AMPLITUDES;
         break;
     }
 
@@ -136,8 +152,9 @@ void make_chord(float *const xhz, float *const yhz,
         yamp[1] = (float)(rand() & 255) / 2550 + 0.2f;
         yamp[2] = (float)(rand() & 255) / 2550 + 0.2f;
         yamp[3] = 1 - (yamp[0] + yamp[1] + yamp[2]);
-        
+
         SELECT_RANDOM_HZ;
+        MULT_AMPLITUDES;
         break;
     }
 
@@ -156,8 +173,9 @@ void make_chord(float *const xhz, float *const yhz,
         yamp[1] = (float)(rand() & 255) / 2550 + 0.2f;
         yamp[2] = (float)(rand() & 255) / 2550 + 0.2f;
         yamp[3] = 1 - (yamp[0] + yamp[1] + yamp[2]);
-        
+
         SELECT_RANDOM_HZ;
+        MULT_AMPLITUDES;
         break;
     }
 
@@ -179,8 +197,9 @@ void make_chord(float *const xhz, float *const yhz,
         yamp[2] = (float)(rand() & 255) / 4080 + 0.16875f;
         yamp[3] = (float)(rand() & 255) / 4080 + 0.16875f;
         yamp[4] = 1 - (yamp[0] + yamp[1] + yamp[2] + yamp[3]);
-        
+
         SELECT_RANDOM_HZ;
+        MULT_AMPLITUDES;
         break;
     }
     

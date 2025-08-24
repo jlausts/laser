@@ -7,6 +7,15 @@
 volatile uint16_t a5;
 #define BLINK_PIN 13
 
+enum {TRANSISTION_UP=1, TRANSISTION_DOWN};
+
+void set_seed() {
+    MCLK->APBCMASK.reg |= MCLK_APBCMASK_TRNG;
+    TRNG->CTRLA.reg = TRNG_CTRLA_ENABLE;
+    while ((TRNG->INTFLAG.reg & TRNG_INTFLAG_DATARDY) == 0) { }
+    randomSeed(TRNG->DATA.reg);
+}
+
 
 void blink(int del)
 {
@@ -145,11 +154,11 @@ inline void pull_from_serial_to_array()
     get_from_serial();
 }
 
-inline void generate_shape(const bool first)
-{
-    wait_for_empty_array();
-    test_make_shapeOLD(first);
-}
+// inline void generate_shape(const bool first)
+// {
+//     wait_for_empty_array();
+//     // test_make_shapeOLD(first);
+// }
 
 static inline void setupADC_A5(void)
 {
@@ -229,37 +238,68 @@ static inline void finishReadA5(volatile uint16_t *value)
     *value = (ADC0)->RESULT.reg;
 }
 
-
-
-void test_make_shape(const bool new_shape)
+void make_shape(const bool new_shape, const float amp_mult, const uint16_t x_offset, const uint16_t y_offset)
 {
-    static Data tmp = {.r = 152, .g = 152, .b = 152, .laser_x = 0, .laser_y = 0};
-    static float xhz[5], yhz[5], xamp[5], yamp[5];
-    static float tones[20];
-    static uint8_t types[10];
-    static uint8_t xc, yc, tc;
+    static Data tmp = {.r = 152, .g = 152, .b = 152};
+    tmp.laser_x = x_offset;
+    tmp.laser_y = y_offset;
 
+    static float xhz[5], yhz[5], xamp[5], yamp[5], xamp2[5], yamp2[5];
+    static uint8_t xc, yc;
+
+    static int t = 0;
     if (new_shape)
     {    
-        tc = 0;
-        uint8_t j = 0;
+        t = 0;
         make_chord(xhz, yhz, xamp, yamp, &xc, &yc);
-        for (uint8_t i = 0; i < xc; ++i, j++)
-        {
-            tones[j++] = xhz[i];
-            tones[j] = xamp[i];
-            types[tc++] = 0;
-        }
-        for (uint8_t i = 0; i < yc; ++i, j++)
-        {
-            tones[j++] = yhz[i];
-            tones[j] = yamp[i];
-            types[tc++] = 1;
-        }
+        tmp.r = random(5, 32) << 3;
+        tmp.g = random(14, 32) << 3;
+        tmp.b = random(7, 32) << 3;
     }
-    fill_array(tc, tones, types, &tmp, new_shape);
+    
+    for (uint8_t i = 0; i < xc; ++i)
+        xamp2[i] = xamp[i] * amp_mult;
+    for (uint8_t i = 0; i < yc; ++i)
+        yamp2[i] = yamp[i] * amp_mult;
+
+    all_combinations(data[!array_reading], &tmp, xc, yc, t, xhz, yhz, xamp2, yamp2, 0, 0, 0);
+    t += 255;
 }
 
+void wait_then_make(const bool new_shape, const float amp_mult, const uint16_t x_offset, const uint16_t y_offset)
+{
+    wait_for_empty_array();
+    make_shape(new_shape, amp_mult, x_offset, y_offset);
+}
+
+void make_shapes()
+{
+    while(1)
+    {
+        
+        wait_then_make(true, 0, 2048, 2048);
+
+        for (float amp_mult = 0; amp_mult < 1; amp_mult += 0.01f)
+        {
+            const float new_amp = sine(((amp_mult + 1.5f) * 0.5f) * TAU) * 0.5f;
+            const float offset = (1.0f - new_amp) * 2048;
+            wait_then_make(false, new_amp, offset, offset);
+        }
+        
+        for (int i = 0; i < 255; ++i)
+            wait_then_make(false, 1, 0, 0);
+        
+        for (float amp_mult = 0; amp_mult < 1; amp_mult += 0.01f)
+        {
+            const float new_amp = sine(((amp_mult + 0.5f) * 0.5f) * TAU) * 0.5f;
+            const float offset = (1.0f - new_amp) * 2048;
+            wait_then_make(false, new_amp, offset, offset);
+        }
+
+        wait_then_make(false, 0, 2048, 2048);
+
+    }
+}
 
 
 // takes 3.211us
@@ -302,6 +342,7 @@ void TimerHandler()
 
 void setup()
 {
+    set_seed();
     setupADC_A5();
 
     // prime DAC
@@ -333,9 +374,9 @@ void setup()
     array_reading = !array_reading;
     get_from_serial(); 
 #else
-    test_make_shape(true);
+    make_shape(true, 0, 0, 0);
     array_reading = !array_reading;
-    test_make_shape(false);
+    make_shape(false, 0, 0, 0);
 
 #endif
     // setup ISR
@@ -344,52 +385,13 @@ void setup()
 
 void loop()
 {
-    
-    while(1)
-    {
-        pin10on;
-        wait_for_empty_array();
-        test_make_shape(1);
-        pin10of;
-        for (int i = 0; i < 512; ++i)
-        {
-            pin10on;
-            wait_for_empty_array();
-            pin10of;
-            test_make_shape(0);
-        }
-    }
-
-    float xhz[5], yhz[5], xamp[5], yamp[5];
-    uint8_t xc, yc;
-    while (1)
-    {
-        pin10on;
-        make_chord(xhz, yhz, xamp, yamp, &xc, &yc);
-        pin10of;
-        for (int i = 0; i < xc; ++i)
-        {
-            Serial.print(xhz[i]);
-            Serial.print(" ");
-            Serial.print(xamp[i]);
-            Serial.print(",");
-        }
-        Serial.print("   ");
-        for (int i = 0; i < yc; ++i)
-        {
-            Serial.print(yhz[i]);
-            Serial.print(" ");
-            Serial.print(yamp[i]);
-            Serial.print(",");
-        }
-        Serial.println();
-    }
+    make_shapes();
 
 
 #ifdef USE_SERIAL
     pull_from_serial_to_array(); 
 #else
-    generate_shape(false);
+    // generate_shape(false);
 #endif
 }
 

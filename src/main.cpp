@@ -3,19 +3,18 @@
 #include "main.h"
 
 #define USE_SERIAL1_NOT
-#define USE_SERIALfg
+#define USE_SERIALd
 volatile uint16_t a5;
 #define BLINK_PIN 13
 
-enum {TRANSISTION_UP=1, TRANSISTION_DOWN};
 
-void set_seed() {
+void set_seed() 
+{
     MCLK->APBCMASK.reg |= MCLK_APBCMASK_TRNG;
     TRNG->CTRLA.reg = TRNG_CTRLA_ENABLE;
     while ((TRNG->INTFLAG.reg & TRNG_INTFLAG_DATARDY) == 0) { }
     randomSeed(TRNG->DATA.reg);
 }
-
 
 void blink(int del)
 {
@@ -154,12 +153,6 @@ inline void pull_from_serial_to_array()
     get_from_serial();
 }
 
-// inline void generate_shape(const bool first)
-// {
-//     wait_for_empty_array();
-//     // test_make_shapeOLD(first);
-// }
-
 static inline void setupADC_A5(void)
 {
     Adc *const adc = ADC0;
@@ -238,66 +231,68 @@ static inline void finishReadA5(volatile uint16_t *value)
     *value = (ADC0)->RESULT.reg;
 }
 
-void make_shape(const bool new_shape, const float amp_mult, const uint16_t x_offset, const uint16_t y_offset)
+void make_shape(const bool new_shape, const float amp_mult, const uint16_t x_offset, const uint16_t y_offset, const float rotate_angle)
 {
-    static Data tmp = {.r = 152, .g = 152, .b = 152};
-    tmp.laser_x = x_offset;
-    tmp.laser_y = y_offset;
+    static ChordInfo info = {.r = 152, .g = 152, .b = 152, .center_x = 2048, .center_y = 2048, .rotate_angle = 0};
+    info.x_offset = x_offset;
+    info.y_offset = y_offset;
+    info.rotate_angle = rotate_angle;
 
-    static float xhz[5], yhz[5], xamp[5], yamp[5], xamp2[5], yamp2[5];
-    static uint8_t xc, yc;
-
-    static int t = 0;
     if (new_shape)
     {    
-        t = 0;
-        make_chord(xhz, yhz, xamp, yamp, &xc, &yc);
-        tmp.r = random(5, 32) << 3;
-        tmp.g = random(14, 32) << 3;
-        tmp.b = random(7, 32) << 3;
+        info.t = 0;
+        make_chord(&info);
+        random_color(&info);
     }
-    
-    for (uint8_t i = 0; i < xc; ++i)
-        xamp2[i] = xamp[i] * amp_mult;
-    for (uint8_t i = 0; i < yc; ++i)
-        yamp2[i] = yamp[i] * amp_mult;
 
-    all_combinations(data[!array_reading], &tmp, xc, yc, t, xhz, yhz, xamp2, yamp2, 0, 0, 0);
-    t += 255;
+    for (uint8_t i = 0; i < info.x_count; ++i)
+        info.xamp[i] = info.xamp1[i] * amp_mult;
+    for (uint8_t i = 0; i < info.y_count; ++i)
+        info.yamp[i] = info.yamp1[i] * amp_mult;
+
+    all_combinations(data[!array_reading], &info);
+    info.t += 255;
 }
 
-void wait_then_make(const bool new_shape, const float amp_mult, const uint16_t x_offset, const uint16_t y_offset)
+void wait_then_make(const bool new_shape, const float amp_mult, const uint16_t x_offset, const uint16_t y_offset, const float rotate_angle)
 {
     wait_for_empty_array();
-    make_shape(new_shape, amp_mult, x_offset, y_offset);
+    make_shape(new_shape, amp_mult, x_offset, y_offset, rotate_angle);
 }
 
 void make_shapes()
 {
     while(1)
     {
-        
-        wait_then_make(true, 0, 2048, 2048);
+        wait_then_make(true, 0, 2048, 2048, 0);
 
-        for (float amp_mult = 0; amp_mult < 1; amp_mult += 0.01f)
+        const float max_amp = .8;
+
+        // random angle -.25 -> +.25
+        const float total_angle = ((float)(rand() & 1023) / 2048.0f - 0.25f) * TAU;
+        const float total_steps = (1.0f / .004f) + (1.0f / 0.007f) + 512;
+        const float angle_step = total_angle / total_steps;
+        float angle = 3 * TAU;
+
+        float offset_add = (1 - max_amp) * 0.5f * 4096;
+        for (float amp_mult = 0; amp_mult < 1; amp_mult += 0.004f, angle += angle_step)
         {
             const float new_amp = sine(((amp_mult + 1.5f) * 0.5f) * TAU) * 0.5f;
             const float offset = (1.0f - new_amp) * 2048;
-            wait_then_make(false, new_amp, offset, offset);
+            wait_then_make(false, new_amp * max_amp, offset * max_amp + offset_add, offset * max_amp + offset_add, angle);
         }
         
-        for (int i = 0; i < 255; ++i)
-            wait_then_make(false, 1, 0, 0);
+        for (int i = 0; i < 512; ++i, angle += angle_step)
+            wait_then_make(false, max_amp, offset_add, offset_add, angle);
         
-        for (float amp_mult = 0; amp_mult < 1; amp_mult += 0.01f)
+        for (float amp_mult = 0; amp_mult < 1; amp_mult += 0.007f, angle += angle_step)
         {
             const float new_amp = sine(((amp_mult + 0.5f) * 0.5f) * TAU) * 0.5f;
             const float offset = (1.0f - new_amp) * 2048;
-            wait_then_make(false, new_amp, offset, offset);
+            wait_then_make(false, new_amp * max_amp, offset * max_amp + offset_add, offset * max_amp + offset_add, angle);
         }
 
-        wait_then_make(false, 0, 2048, 2048);
-
+        wait_then_make(false, 0, 2048, 2048, angle);
     }
 }
 
@@ -374,9 +369,9 @@ void setup()
     array_reading = !array_reading;
     get_from_serial(); 
 #else
-    make_shape(true, 0, 0, 0);
+    make_shape(true, 0, 0, 0, 0);
     array_reading = !array_reading;
-    make_shape(false, 0, 0, 0);
+    make_shape(false, 0, 0, 0, 0);
 
 #endif
     // setup ISR
@@ -385,19 +380,36 @@ void setup()
 
 void loop()
 {
-    make_shapes();
 
 
 #ifdef USE_SERIAL
     pull_from_serial_to_array(); 
 #else
-    // generate_shape(false);
+    make_shapes();
 #endif
 }
 
-// todo
+
+
 /*
-    * generate random shapes like how python does.
-    * use sine function to modulate the amplitude.
-    * basically, just import all python and c code on the the SAMD51
+TODO
+think of some transistion ideas from one shape to another.
+    the twister: rotate a bunch of times and shrink.
+    the spiral: spiral a but off center, then spiral inward while shrinking and rotating
+    the dissolver: try changing the HZ's all at the same time to their new HZ.
+    the cosine: cosine interpolate shrink and grow to the new shape.
+    the shaker: shake either side to side or up and down while shrinking.
+    off center twist: move a but to one side, rotate on the center axis and shrink and move back into the center and shrink.
+    the fold: shrink only one axis and when the image is a line, then change the HZ's and unfold into the new shape.
+    big "o": remove one HZ at a time, and arrive at a perfect circle by adding a HZ identical to the other one, 
+        then add the new HZ's back onto it. remove the seconds HZ require to make the circle at the end.
+        other base-shapes could be used, like a "figure 8"
+    re-born: change one HZ at a time that still works with the base HZ, until all of them are different.
+
+set up a double rotation: shape spins, and orbits the center. like a planet.
+MAYBE: smoothe out the amplitude changer by calculating it for every position?
+think of a better formula to ensure only the cool shapes are created.
+transistion one HZ out of the shape, and bring a new one into the shape.
+    the new shape will have new aplitudes for all the other HZ's but not by much.
+    cosine interpolate between the old AMPS and the new ones.
 */

@@ -6,5 +6,7 @@
         "unistd.h": "c",
         "stdint.h": "c",
         "shape.h": "c"
-    }
+    },
+
+    "explorer.autoReveal": false
 }

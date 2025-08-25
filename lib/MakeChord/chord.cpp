@@ -7,9 +7,9 @@
 
 #define SELECT_RANDOM_HZ \
 for (uint8_t i = 0; i < info->x_count; ++i)\
-    info->xhz[i] = hzs[random(hz_count)] + (float)(rand() & 255) / ((255 / MAX_OUT_TUNE) + MAX_OUT_TUNE/2);\
+    info->xhz[i] = info->other_hz[random(hz_count)] + (float)(rand() & 255) / ((255 / MAX_OUT_TUNE) + MAX_OUT_TUNE/2);\
 for (uint8_t i = 0; i < info->y_count; ++i)\
-    info->yhz[i] = hzs[random(hz_count)] + (float)(rand() & 255) / ((255 / MAX_OUT_TUNE) + MAX_OUT_TUNE/2);
+    info->yhz[i] = info->other_hz[random(hz_count)] + (float)(rand() & 255) / ((255 / MAX_OUT_TUNE) + MAX_OUT_TUNE/2);
 
 #define MULT_AMPLITUDES \
 for (uint8_t i = 0; i < info->x_count; ++i){\
@@ -74,9 +74,8 @@ void make_chord(ChordInfo *info)
     static constexpr float AMP_MULT = 4095.0 / 2.0;
 
     int hz_count = 0;
-    static float hzs[16];
     for (float tmp_hz = hz; tmp_hz <= 1024; tmp_hz += hz, ++hz_count)
-        hzs[hz_count] = tmp_hz;
+        info->other_hz[hz_count] = tmp_hz;
 
     switch (rand() & 0b1111)
     {

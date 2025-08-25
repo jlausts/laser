@@ -106,3 +106,5 @@ constexpr float AMP_MULT = 4095.0 / 2.0;
 
 // one array is read while the other is filled from Serial
 volatile Data data[2][256] = {0};
+
+inline void wait_for_empty_array();

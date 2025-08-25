@@ -267,25 +267,28 @@ void make_shapes()
         wait_then_make(true, 0, 2048, 2048, 0);
 
         const float max_amp = .8;
+        const float start_grow_speed = 0.005f;
+        const float end_shrink_speed = 0.005f;
+        const int stable_time = 512;
 
         // random angle -.25 -> +.25
         const float total_angle = ((float)(rand() & 1023) / 2048.0f - 0.25f) * TAU;
-        const float total_steps = (1.0f / .004f) + (1.0f / 0.007f) + 512;
+        const float total_steps = (1.0f / start_grow_speed) + (1.0f / end_shrink_speed) + stable_time;
         const float angle_step = total_angle / total_steps;
         float angle = 3 * TAU;
 
         float offset_add = (1 - max_amp) * 0.5f * 4096;
-        for (float amp_mult = 0; amp_mult < 1; amp_mult += 0.004f, angle += angle_step)
+        for (float amp_mult = 0; amp_mult < 1; amp_mult += start_grow_speed, angle += angle_step)
         {
             const float new_amp = sine(((amp_mult + 1.5f) * 0.5f) * TAU) * 0.5f;
             const float offset = (1.0f - new_amp) * 2048;
             wait_then_make(false, new_amp * max_amp, offset * max_amp + offset_add, offset * max_amp + offset_add, angle);
         }
         
-        for (int i = 0; i < 512; ++i, angle += angle_step)
+        for (int i = 0; i < stable_time; ++i, angle += angle_step)
             wait_then_make(false, max_amp, offset_add, offset_add, angle);
         
-        for (float amp_mult = 0; amp_mult < 1; amp_mult += 0.007f, angle += angle_step)
+        for (float amp_mult = 0; amp_mult < 1; amp_mult += end_shrink_speed, angle += angle_step)
         {
             const float new_amp = sine(((amp_mult + 0.5f) * 0.5f) * TAU) * 0.5f;
             const float offset = (1.0f - new_amp) * 2048;
@@ -393,19 +396,6 @@ void loop()
 
 /*
 TODO
-think of some transistion ideas from one shape to another.
-    the twister: rotate a bunch of times and shrink.
-    the spiral: spiral a but off center, then spiral inward while shrinking and rotating
-    the dissolver: try changing the HZ's all at the same time to their new HZ.
-    the cosine: cosine interpolate shrink and grow to the new shape.
-    the shaker: shake either side to side or up and down while shrinking.
-    off center twist: move a but to one side, rotate on the center axis and shrink and move back into the center and shrink.
-    the fold: shrink only one axis and when the image is a line, then change the HZ's and unfold into the new shape.
-    big "o": remove one HZ at a time, and arrive at a perfect circle by adding a HZ identical to the other one, 
-        then add the new HZ's back onto it. remove the seconds HZ require to make the circle at the end.
-        other base-shapes could be used, like a "figure 8"
-    re-born: change one HZ at a time that still works with the base HZ, until all of them are different.
-
 set up a double rotation: shape spins, and orbits the center. like a planet.
 MAYBE: smoothe out the amplitude changer by calculating it for every position?
 think of a better formula to ensure only the cool shapes are created.

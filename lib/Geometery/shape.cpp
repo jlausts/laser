@@ -368,3 +368,4 @@ void all_combinations(volatile Data *const data_array, const ChordInfo *const in
         }
     }
 }
+

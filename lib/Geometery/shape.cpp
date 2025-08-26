@@ -84,7 +84,7 @@ void random_color(ChordInfo *const info)
                      (info->g > g ? info->g - g : g - info->g) + 
                      (info->b > b ? info->b - b : b - info->b);
 
-    } while ((((info->r - 5) + (info->g - 14) + (info->b - 7)) <= 4) && difference > 9);
+    } while ((((info->r - 5) + (info->g - 14) + (info->b - 7)) <= 6) && difference > 9);
     
     info->r <<= 3;
     info->g <<= 3;

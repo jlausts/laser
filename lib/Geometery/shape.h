@@ -1,6 +1,10 @@
+#ifndef SHAPES
+#define SHAPES
+
 #include <Arduino.h>
 #include "sine_table.h"
 #include "chord.h"
+
 
 typedef struct __attribute__((packed))
 {
@@ -13,3 +17,5 @@ typedef struct __attribute__((packed))
 void random_color(ChordInfo *const info);
 
 void all_combinations(volatile Data *const data_array, const ChordInfo *const info);
+
+#endif

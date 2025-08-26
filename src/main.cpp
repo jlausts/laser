@@ -385,10 +385,12 @@ void loop()
 {
 
 
+
 #ifdef USE_SERIAL
     pull_from_serial_to_array(); 
 #else
-    make_shapes();
+    flow();
+    // make_shapes();
 #endif
 }
 

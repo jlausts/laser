@@ -270,20 +270,29 @@ void maintain_shape(int stable_time, ChordInfo *info)
 }
 
 
-void tornado_twist(ChordInfo *const info)
+void tornado_twist_power2(ChordInfo *const info)
 {
     const float start_grow_speed = 0.005f;
     const float end_shrink_speed = 0.005f;
     const float angle_step = 0.01f;
     const int stable_time = 512;
-    const float twist_count = 4.5;
-    const float angle_mult = 2.5f;
+    const float twist_count = 4;
+    const float angle_mult = 4.0f;
 
     float solved_x = info->alpha_angle_step * 100 / 2.0f / angle_mult;
     float y_adder = solved_x * solved_x;
 
+    float _deg, _deg2;
+    {
+        float ii = (twist_count - 0);
+        float jj = (twist_count - angle_step);
+        _deg = -ii * ii * angle_mult + info->alpha_angle + TAU * 5;
+        _deg2 = -jj * jj * angle_mult + info->alpha_angle + TAU * 5;
+    }
+    const float stop_slope = _deg2 - _deg;
+
     for (float deg = 0, deg2 = 0, i = 0, j = angle_step; 
-        i < twist_count + y_adder * angle_mult * 2; 
+        deg2-deg<stop_slope; 
         i += angle_step, j += angle_step)
     { 
         float ii = i + solved_x;
@@ -331,7 +340,7 @@ void tornado_twist(ChordInfo *const info)
     info->xamp_step = 0;  
 }
 
-void tornado_twist2(ChordInfo *const info)
+void tornado_twist_power4(ChordInfo *const info)
 {
     const float start_grow_speed = 0.005f;
     const float end_shrink_speed = 0.005f;
@@ -340,11 +349,20 @@ void tornado_twist2(ChordInfo *const info)
     const float twist_count = 2.5;
     const float angle_mult = 1.0f;
 
-    float solved_x = cbrtf(info->alpha_angle_step * (float)LEN / 4.0f);
+    float solved_x = cbrtf(info->alpha_angle_step * 100 / 4.0f / angle_mult);
     float y_adder = solved_x * solved_x * solved_x * solved_x;
 
-    for (float deg = info->alpha_angle, deg2 = info->alpha_angle, i = 0, j = angle_step; 
-        i < twist_count; 
+    float _deg, _deg2;
+    {
+        float ii = (twist_count - 0);
+        float jj = (twist_count - angle_step);
+        _deg = -ii * ii * ii * ii * angle_mult + info->alpha_angle + TAU * 5;
+        _deg2 = -jj * jj * jj * jj * angle_mult + info->alpha_angle + TAU * 5;
+    }
+    const float stop_slope = _deg2 - _deg;
+
+    for (float deg = 0, deg2 = 0, i = 0, j = angle_step; 
+        deg2-deg < stop_slope; 
         i += angle_step, j += angle_step)
     { 
         float ii = (i + solved_x);
@@ -362,7 +380,7 @@ void tornado_twist2(ChordInfo *const info)
     const float total_steps = (1.0f / start_grow_speed) + (1.0f / end_shrink_speed) + stable_time - 2.0f;
     info->alpha_angle_step = total_angle / total_steps;
     info->alpha_angle = RANDOM_ROTATION_ANGLE * 5 * TAU;
-    float end_x = twist_count - cbrtf(info->alpha_angle_step * (float)LEN / 4.0f);
+    float end_x = twist_count - cbrtf(info->alpha_angle_step * 100 / 4.0f / angle_mult);
     wait_then_make(true, info);
     for (float deg = info->alpha_angle, deg2 = info->alpha_angle, i = 0, j = angle_step; 
         i < end_x; 
@@ -461,16 +479,16 @@ void flow()
     start_flow(&info);
     while(1)
     {
-        tornado_twist(&info);
+        tornado_twist_power4(&info);
         maintain_shape(512, &info);
-        cosine_transistion(&info);
-        maintain_shape(512, &info);
+        // cosine_transistion(&info);
+        // maintain_shape(512, &info);
     }
 }
 
 /*
     the twister: rotate a bunch of times and shrink.
-    the tornado-twist: accellerate the rotational speed until suddenly changing the shape, then slow rotation until still.
+    //the tornado-twist: accellerate the rotational speed until suddenly changing the shape, then slow rotation until still.
     the spiral: spiral a but off center, then spiral inward while shrinking and rotating
     the planet_vanish: go off center, rotate and orbit the center while shrinking to a dot, then while orbiting the center turn back into a new shape.
     the dissolver: try changing the HZ's all at the same time to their new HZ.

@@ -10,6 +10,8 @@
             "includePath": [
                 "c:/Users/jlaus/Documents/Arduino/laser/include",
                 "c:/Users/jlaus/Documents/Arduino/laser/src",
+                "c:/Users/jlaus/Documents/Arduino/laser/lib/Transitions",
+                "c:/Users/jlaus/Documents/Arduino/laser/lib/sigmoid_function",
                 "c:/Users/jlaus/Documents/Arduino/laser/lib/Geometery",
                 "c:/Users/jlaus/Documents/Arduino/laser/lib/SineTable",
                 "c:/Users/jlaus/Documents/Arduino/laser/lib/Timer",
@@ -20,7 +22,6 @@
                 "C:/Users/jlaus/.platformio/packages/framework-arduino-samd-adafruit/libraries/Adafruit_TinyUSB_Arduino/src/arduino",
                 "C:/Users/jlaus/.platformio/packages/framework-cmsis/CMSIS/DSP/Include",
                 "C:/Users/jlaus/.platformio/packages/framework-arduino-samd-adafruit/variants/metro_m4",
-                "c:/Users/jlaus/Documents/Arduino/laser/lib/Transitions",
                 "C:/Users/jlaus/.platformio/packages/framework-arduino-samd-adafruit/libraries/Adafruit_TinyUSB_Arduino/src",
                 "C:/Users/jlaus/.platformio/packages/framework-arduino-samd-adafruit/libraries/Adafruit_ZeroDMA",
                 "C:/Users/jlaus/.platformio/packages/framework-arduino-samd-adafruit/libraries/CI_Tests",
@@ -39,6 +40,8 @@
                 "path": [
                     "c:/Users/jlaus/Documents/Arduino/laser/include",
                     "c:/Users/jlaus/Documents/Arduino/laser/src",
+                    "c:/Users/jlaus/Documents/Arduino/laser/lib/Transitions",
+                    "c:/Users/jlaus/Documents/Arduino/laser/lib/sigmoid_function",
                     "c:/Users/jlaus/Documents/Arduino/laser/lib/Geometery",
                     "c:/Users/jlaus/Documents/Arduino/laser/lib/SineTable",
                     "c:/Users/jlaus/Documents/Arduino/laser/lib/Timer",
@@ -49,7 +52,6 @@
                     "C:/Users/jlaus/.platformio/packages/framework-arduino-samd-adafruit/libraries/Adafruit_TinyUSB_Arduino/src/arduino",
                     "C:/Users/jlaus/.platformio/packages/framework-cmsis/CMSIS/DSP/Include",
                     "C:/Users/jlaus/.platformio/packages/framework-arduino-samd-adafruit/variants/metro_m4",
-                    "c:/Users/jlaus/Documents/Arduino/laser/lib/Transitions",
                     "C:/Users/jlaus/.platformio/packages/framework-arduino-samd-adafruit/libraries/Adafruit_TinyUSB_Arduino/src",
                     "C:/Users/jlaus/.platformio/packages/framework-arduino-samd-adafruit/libraries/Adafruit_ZeroDMA",
                     "C:/Users/jlaus/.platformio/packages/framework-arduino-samd-adafruit/libraries/CI_Tests",

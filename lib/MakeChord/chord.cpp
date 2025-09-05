@@ -64,20 +64,40 @@ void printChordInfo(const ChordInfo *c)
 
 
 // 34.5us -> 85.6us
-void make_chord(ChordInfo *info)
+void make_chord(ChordInfo *info, const bool one_hz)
 {    
-    // random hz between 64 and 128 to 1/32 precision
-    const float hz = (float)(((uint16_t)rand() & (2048 - 1)) | 1024) / 16.0f;
 
     static constexpr float TAU = 6.28318530717958647f;
     static constexpr float HZ_MULT = TAU / 40000.0f;
     static constexpr float AMP_MULT = 4095.0 / 2.0;
 
+    if (one_hz)
+    {
+        info->xhz[0] = info->other_hz[random(info->other_hz_count)];// + (float)(rand() & 255) / ((255 / MAX_OUT_TUNE) + MAX_OUT_TUNE/2);
+        info->yhz[0] = info->other_hz[random(info->other_hz_count)];// + (float)(rand() & 255) / ((255 / MAX_OUT_TUNE) + MAX_OUT_TUNE/2);
+        info->xhz[0] *= HZ_MULT;
+        info->yhz[0] *= HZ_MULT;
+        for (int i = 0; i < info->other_hz_count; ++i)
+            Serial.println(info->other_hz[i]);
+        Serial.println(random(info->other_hz_count));
+        Serial.println(random(info->base_hz));
+        Serial.println(info->xhz[0]);
+        Serial.println(info->yhz[0]);
+        return;
+    }
+
+    // random hz between 64 and 128 to 1/32 precision
+    const float hz = (float)(((uint16_t)rand() & (2048 - 1)) | 1024) / 16.0f;
+    info->base_hz = hz;
+
+
     int hz_count = 0;
     for (float tmp_hz = hz; tmp_hz <= 1024; tmp_hz += hz, ++hz_count)
         info->other_hz[hz_count] = tmp_hz;
+    
+    info->other_hz_count = hz_count;
 
-    switch (rand() & 0b1111)
+    switch (11)//rand() & 0b1111))
     {
 
     case 0:
@@ -249,4 +269,48 @@ void make_chord(ChordInfo *info)
         break;
     }
 
+}
+
+uint8_t hz_count_to_num_hz(const int x_count, const int y_count)
+{
+    switch (x_count | (y_count << 5))
+    {
+    case 2 | (2 << 5):
+        return 3;
+        break;
+
+    case 3 | (2 << 5):
+        return 6;
+        break;
+
+    case 2 | (3 << 5):
+        return 9;
+        break;
+
+    case 3 | (3 << 5):
+        return 11;
+        break;
+
+    case 4 | (3 << 5):
+        return 12;
+        break;
+
+    case 3 | (4 << 5):
+        return 13;
+        break;
+
+    case 4 | (4 << 5):
+        return 14;
+        break;
+
+    case 5 | (5 << 5):
+        return 15;
+        break;
+    
+    default:
+        return 2;
+        break;
+    }
+
+    return 2;
 }

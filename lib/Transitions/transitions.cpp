@@ -1,6 +1,7 @@
 #include "transitions.h"
 #include "transition_variables.h"
 #include <math.h>
+#include "print.h"
 #include "sigmoid.h"
 
 #define TRANSITION_FOR_LOOP for (int j = 0, k = info->t; j < LEN; \
@@ -9,61 +10,15 @@
     x_offset+=info->x_offset_step, y_offset+=info->y_offset_step)
 
 extern volatile Data data[2][256];
-static const double TAU = 6.283185307179586;
+static constexpr double TAU = 6.283185307179586;
 
 #define ROTATE_CLAMP rotate_point_and_clamp2(&data_array[j], angle, info->center_x, info->center_y);
 
-#define OFFSET data_array[j].laser_x += x_offset;\
-               data_array[j].laser_y += y_offset;
+#define OFFSET data_array[j].laser_x += x_offset; data_array[j].laser_y += y_offset;
 
 #define RANDOM_ROTATION_ANGLE 0.5f
 
 
-
-
-void println(){}
-
-// --- Base cases ---
-
-// Generic type: uses normal Serial.println
-template <typename T>
-void println(const T &value) {
-    Serial.println(value);
-}
-
-// float specialization
-template <>
-void println<float>(const float &value) {
-    Serial.println(value, 6);   // 6 decimal places
-}
-
-// double specialization
-template <>
-void println<double>(const double &value) {
-    Serial.println(value, 10);  // 10 decimal places
-}
-
-template <typename T, typename... Args>
-void println(const T &first, const Args&... rest) {
-    // Generic type
-    Serial.print(first);
-    Serial.print(' ');
-    println(rest...);
-}
-
-template <typename... Args>
-void println(const float &first, const Args&... rest) {
-    Serial.print(first, 6);
-    Serial.print(' ');
-    println(rest...);
-}
-
-template <typename... Args>
-void println(const double &first, const Args&... rest) {
-    Serial.print(first, 10);
-    Serial.print(' ');
-    println(rest...);
-}
 
 
 
@@ -97,8 +52,8 @@ void transitioner(volatile Data *const data_array, const ChordInfo *const info)
     float x_offset = info->x_offset_start;
     float y_offset = info->y_offset_start;
     // println(angle, info->rotate_angle_step*1e6, xamp*1e3, info->xamp_step * 1e6, "\n");
-
     // println((xamp+yamp) * 0.5f);
+
     // no offset
     if (x_offset == 0 && y_offset == 0)
     {
@@ -575,7 +530,7 @@ void tornado_twist_power4(ChordInfo *const info)
     info->xamp_step = 0;
 }
 
-bool reborn(ChordInfo *const info)
+bool reborn(ChordInfo *const info, const int time=256)
 {
     if (info->x_count == 5 && info->y_count == 5)
         return false;
@@ -587,8 +542,7 @@ bool reborn(ChordInfo *const info)
 
     make_chord(&new_info, true);
 
-    const int count = 256;
-    const float count_inv = 0.5f / (float)count * TAU;
+    const float count_inv = 0.5f / (float)time * TAU;
 
     const int xi = random(info->x_count);
     const int yi = random(info->y_count);
@@ -601,7 +555,7 @@ bool reborn(ChordInfo *const info)
     info->x_count++;
     info->y_count++;
     
-    for (float j = 0, k = 0; j < count; j += 1, k += count_inv)
+    for (float j = 0, k = 0; j < time; j += 1, k += count_inv)
     {
         const float amp_mult = cosine(k) * 0.5f;
         info->xamp1[xi] = original_xamp * amp_mult;
@@ -625,6 +579,192 @@ bool reborn(ChordInfo *const info)
     return true;
 }
 
+void one_twist_in(ChordInfo *const info)
+{
+    const float max_amp = .8;
+    const float start_grow_speed = 0.006f;
+    const float end_shrink_speed = 0.006f;
+
+    const float offset_add = (1 - max_amp) * 0.5f * 4096;
+    const float deg_step = end_shrink_speed * PI;
+    const float original_angle = info->rotate_angle_start;
+    for (float deg = 0, amp_mult = 1; amp_mult > end_shrink_speed; deg += deg_step, amp_mult -= end_shrink_speed, info->alpha_angle += info->alpha_angle_step)
+    {
+        const float cosine_angle = (1.0f - cosine(deg) * 0.5f) * TAU;
+        info->rotate_angle_start = cosine_angle + original_angle;
+        info->rotate_angle_step = (((1.0f - cosine(deg + deg_step) * 0.5f) * TAU) - cosine_angle) / (float)LEN;  
+
+        const float new_amp = sine(((amp_mult + 1.5f) * 0.5f) * TAU) * 0.5f;
+        const float offset = (1.0f - new_amp) * 2048;
+        const float new_amp2 = sine(((amp_mult + 1.5f + start_grow_speed) * 0.5f) * TAU) * 0.5f;
+        const float offset2 = (1.0f - new_amp2) * 2048;
+
+        info->x_offset_start = offset * max_amp + offset_add;
+        info->x_offset_step = (offset2 - offset) / (float)LEN;
+
+        info->y_offset_start = info->x_offset_start;
+        info->y_offset_step = info->x_offset_step;
+
+        info->xamp_start = new_amp * max_amp;
+        info->xamp_step = (new_amp2 - new_amp) / (float)LEN;
+        info->yamp_start = info->xamp_start;
+        info->yamp_step = info->xamp_step;
+        wait_then_make(false, info);
+    }
+
+    int first_iterations = 0;
+    float next_alpha_angle = 0, next_alph_angle_step = 0, solved_x, y_adder;
+    cosine_twister_iterations(info, &first_iterations, &next_alpha_angle, &next_alph_angle_step, &solved_x, &y_adder);
+    const float angle_step = 0.01f;
+    const float twist_count = 2.5;
+    const float angle_mult = 1.0f;
+    const float amp_step = TAU * 0.45f / first_iterations;
+    float deg2 = 0;
+    // const float first_amp = info->xamp_start;
+
+    info->rotate_angle_start = deg2; 
+    info->xamp_start += info->xamp_step * LEN;
+    info->yamp_start = info->xamp_start;
+
+    info->alpha_angle_step = next_alph_angle_step;
+    info->alpha_angle = next_alpha_angle;
+    float end_x = twist_count - cbrtf(info->alpha_angle_step / angle_step / 4.0f / angle_mult);
+    const float amp_step2 = TAU * 0.45f / (end_x / angle_step);
+    wait_then_make(true, info);
+    for (float deg = info->alpha_angle, deg2 = info->alpha_angle, i = 0, j = angle_step, amp = TAU * 0.55f;
+        i < end_x;
+        i += angle_step, j += angle_step, amp += amp_step2)
+    {
+        float ii = (twist_count - i);
+        float jj = (twist_count - j);
+        deg = -ii * ii * ii * ii * angle_mult + info->alpha_angle + TAU * 5;
+        deg2 = -jj * jj * jj * jj * angle_mult + info->alpha_angle + TAU * 5;
+        info->rotate_angle_start = deg;
+        info->rotate_angle_step = (deg2 - deg) / (float)LEN;
+
+        const float new_amp = cosine(amp) * 0.5f;
+        const float offset = (1.0f - new_amp) * 2048;
+        const float new_amp2 = cosine(amp + amp_step) * 0.5f;
+        const float offset2 = (1.0f - new_amp2) * 2048;
+
+        info->x_offset_start = offset * max_amp + offset_add;
+        info->x_offset_step = (offset2 - offset) / (float)LEN;
+
+        info->y_offset_start = info->x_offset_start;
+        info->y_offset_step = info->x_offset_step;
+
+        info->xamp_start = new_amp * max_amp;
+        info->xamp_step = (new_amp2 - new_amp) / (float)LEN;
+
+        info->yamp_start = info->xamp_start;
+        info->yamp_step = info->xamp_step;
+
+        wait_then_make(false, info);
+    }
+
+    info->alpha_angle = info->rotate_angle_start + info->rotate_angle_step;
+    info->x_offset_start += info->x_offset_step;
+    info->y_offset_start += info->y_offset_step;
+    info->xamp_start += info->yamp_step;
+    info->yamp_start += info->xamp_step;
+
+    info->x_offset_step = 0;
+    info->y_offset_step = 0;
+    info->yamp_step = 0;
+    info->xamp_step = 0;
+}
+
+void one_twist_out(ChordInfo *const info)
+{
+    int first_iterations = 0;
+    float next_alpha_angle = 0, next_alph_angle_step = 0, solved_x, y_adder;
+    cosine_twister_iterations(info, &first_iterations, &next_alpha_angle, &next_alph_angle_step, &solved_x, &y_adder);
+    const float max_amp = 0.8f;
+    const float angle_step = 0.01f;
+    const float angle_mult = 1.0f;
+    const float amp_step = TAU * 0.45f / first_iterations;
+    float deg2 = 0;
+    const float offset_add = (1 - max_amp) * 0.5f * 4096;
+    // const float first_amp = info->xamp_start;
+
+    for (float deg = 0, i = 0, j = angle_step, count = 0, amp = 0;
+        count < first_iterations;
+        i += angle_step, j += angle_step, ++count, amp += amp_step)
+    {
+        float ii = (i + solved_x);
+        float jj = (j + solved_x);
+        deg = ii * ii * ii * ii * angle_mult + info->alpha_angle - y_adder;
+        deg2 = jj * jj * jj * jj * angle_mult + info->alpha_angle - y_adder;
+        info->rotate_angle_start = deg;
+        info->rotate_angle_step = (deg2 - deg) / (float)LEN;
+
+        const float new_amp = cosine(amp) * 0.5f;
+        const float offset = (1.0f - new_amp) * 2048;
+        const float new_amp2 = cosine(amp + amp_step) * 0.5f;
+        const float offset2 = (1.0f - new_amp2) * 2048;
+
+        info->x_offset_start = offset * max_amp + offset_add;
+        info->x_offset_step = (offset2 - offset) / (float)LEN;
+
+        info->y_offset_start = info->x_offset_start;
+        info->y_offset_step = info->x_offset_step;
+
+        info->xamp_start = new_amp * max_amp;
+        info->xamp_step = (new_amp2 - new_amp) / (float)LEN;
+
+        info->yamp_start = info->xamp_start;
+        info->yamp_step = info->xamp_step;
+
+        wait_then_make(false, info);
+    }
+    info->rotate_angle_start = deg2; 
+    info->xamp_start += info->xamp_step * LEN;
+    info->yamp_start = info->xamp_start;
+
+    info->alpha_angle_step = next_alph_angle_step;
+    info->alpha_angle = next_alpha_angle;
+    wait_then_make(true, info);
+
+
+    const float start_grow_speed = 0.006f;
+    const float end_shrink_speed = 0.006f;
+    const float deg_step = end_shrink_speed * PI * 0.5f;
+    const float original_angle = info->rotate_angle_start;
+    for (float deg = PI * 0.5f, amp_mult = start_grow_speed; amp_mult < 1; deg += deg_step, amp_mult += start_grow_speed, info->alpha_angle += info->alpha_angle_step)
+    {
+        const float cosine_angle = (1.0f - cosine(deg) * 0.5f * PI) * TAU;
+        info->rotate_angle_start = cosine_angle + original_angle;
+        info->rotate_angle_step = (((1.0f - cosine(deg + deg_step) * 0.5f * PI) * TAU) - cosine_angle) / (float)LEN;  
+
+        const float new_amp = sine(((amp_mult + 1.5f) * 0.5f) * TAU) * 0.5f;
+        const float offset = (1.0f - new_amp) * 2048;
+        const float new_amp2 = sine(((amp_mult + 1.5f + start_grow_speed) * 0.5f) * TAU) * 0.5f;
+        const float offset2 = (1.0f - new_amp2) * 2048;
+
+        info->x_offset_start = offset * max_amp + offset_add;
+        info->x_offset_step = (offset2 - offset) / (float)LEN;
+
+        info->y_offset_start = info->x_offset_start;
+        info->y_offset_step = info->x_offset_step;
+
+        info->xamp_start = new_amp * max_amp;
+        info->xamp_step = (new_amp2 - new_amp) / (float)LEN;
+        info->yamp_start = info->xamp_start;
+        info->yamp_step = info->xamp_step;
+        wait_then_make(false, info);
+    }
+    info->alpha_angle = info->rotate_angle_start + info->alpha_angle_step;
+    info->x_offset_start += info->x_offset_step;
+    info->y_offset_start += info->y_offset_step;
+    info->xamp_start += info->yamp_step;
+    info->yamp_start += info->xamp_step;
+
+    info->x_offset_step = 0;
+    info->y_offset_step = 0;
+    info->yamp_step = 0;
+    info->xamp_step = 0;
+}
+
 void spiral(ChordInfo *const info)
 {
 
@@ -644,6 +784,7 @@ void big_o(ChordInfo *const info)
 {
 
 }
+
 
 void start_flow(ChordInfo *const info)
 {
@@ -676,31 +817,88 @@ void start_flow(ChordInfo *const info)
     maintain_shape(512, info);
 }
 
+void maintain_and_change(ChordInfo *info, const int wait=400)
+{
+    switch (rand() & 0b11)
+    {
+    case 0:
+        maintain_shape(600, info);
+    case 1:
+        reborn(info, wait);
+        break;
+    case 2:
+        reborn(info, wait);
+        reborn(info, wait);
+        break;
+    case 3:
+        reborn(info, wait);
+        reborn(info, wait);
+        reborn(info, wait);
+        break;
+    default:
+        break;
+    }
+}
+
+void transition(ChordInfo *info)
+{
+    static uint8_t previous_num = 255;
+    const uint8_t num = random(6);
+
+    if (num == previous_num) 
+    {
+        transition(info);
+        return;
+    }
+
+    previous_num = num;
+
+    // one_twist_out(info);
+    // maintain_shape(100, info);
+    // return;
+
+    switch (num)
+    {
+    case 0:
+        cosine_transistion(info);
+        break;
+    case 1:
+        tornado_twist_power4(info);
+        break;
+    case 2:
+        cosine_twister(info);
+        break;
+    case 3:
+        shaker(info);
+        break;
+    case 4:
+        reborn(info, 200);
+        reborn(info, 300);
+        reborn(info, 400);
+        break;
+    case 5:
+        one_twist_in(info);
+        break;
+    case 6:
+        one_twist_out(info);
+        break;
+    case 7:
+        break;
+    default:
+        break;
+    }
+    previous_num = num;
+
+    maintain_and_change(info);
+}
+
 void flow()
 {
     static ChordInfo info = {.r = 152, .g = 152, .b = 152, .center_x = 2048, .center_y = 2048, .rotate_angle = 0};
     start_flow(&info);
-    const int wait = 300;
     while(1)
     {
-
-        if (reborn(&info) && reborn(&info))
-            maintain_shape(wait, &info);
-
-        cosine_transistion(&info);
-        maintain_shape(wait, &info);
-
-        tornado_twist_power4(&info);
-        maintain_shape(wait, &info);
-
-        cosine_twister(&info);
-        maintain_shape(wait, &info);
-
-        shaker(&info);
-        maintain_shape(wait, &info);
-
-        cosine_transistion(&info);
-        maintain_shape(wait, &info);
+        transition(&info);
     }
 }
 
@@ -714,9 +912,11 @@ void flow()
     //the shaker: shake either side to side or up and down while shrinking.
     off center twist: move a but to one side, rotate on the center axis and shrink and move back into the center and shrink.
     //UGLY. the fold: shrink only one axis and when the image is a line, then change the HZ's and unfold into the new shape.
-    re-born: change one HZ at a time that still works with the base HZ, until all of them are different.
+    //re-born: change one HZ at a time that still works with the base HZ, until all of them are different.
     // LINES DONT WORK. line spinner: go into a horizontal line, make the line spin slowly, turn into a shape, and then slow down the RPM
     // LINES DONT WORK. round line:   Go into a horizontal line then the line will open into a circle then add components until shape is generated
+
+    one-twist: do one full rotation, then cosine shrink, then grow while twisting once until back to full size.
 
     big "o": remove one HZ at a time, and arrive at a perfect circle by adding a HZ identical to the other one,
         then add the new HZ's back onto it. remove the seconds HZ require to make the circle at the end.

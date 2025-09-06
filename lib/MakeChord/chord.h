@@ -25,6 +25,6 @@ void printChordInfo(const ChordInfo *c);
 
 uint8_t hz_count_to_num_hz(const int x_count, const int y_count);
 
-void make_chord(ChordInfo *info, const bool one_hz=false);
+void make_chord(ChordInfo *info, const bool one_hz=false, const float base_hz=0, const uint8_t hz_using=0);
 
 #endif

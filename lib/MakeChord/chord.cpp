@@ -64,7 +64,7 @@ void printChordInfo(const ChordInfo *c)
 
 
 // 34.5us -> 85.6us
-void make_chord(ChordInfo *info, const bool one_hz)
+void make_chord(ChordInfo *info, const bool one_hz, const float base_hz, const uint8_t hz_using)
 {    
 
     static constexpr float TAU = 6.28318530717958647f;
@@ -77,17 +77,11 @@ void make_chord(ChordInfo *info, const bool one_hz)
         info->yhz[0] = info->other_hz[random(info->other_hz_count)];// + (float)(rand() & 255) / ((255 / MAX_OUT_TUNE) + MAX_OUT_TUNE/2);
         info->xhz[0] *= HZ_MULT;
         info->yhz[0] *= HZ_MULT;
-        for (int i = 0; i < info->other_hz_count; ++i)
-            Serial.println(info->other_hz[i]);
-        Serial.println(random(info->other_hz_count));
-        Serial.println(random(info->base_hz));
-        Serial.println(info->xhz[0]);
-        Serial.println(info->yhz[0]);
         return;
     }
 
     // random hz between 64 and 128 to 1/32 precision
-    const float hz = (float)(((uint16_t)rand() & (2048 - 1)) | 1024) / 16.0f;
+    const float hz = (base_hz == 0 ? (float)(((uint16_t)rand() & (2048 - 1)) | 1024) / 16.0f : base_hz);
     info->base_hz = hz;
 
 
@@ -97,7 +91,7 @@ void make_chord(ChordInfo *info, const bool one_hz)
     
     info->other_hz_count = hz_count;
 
-    switch (11)//rand() & 0b1111))
+    switch (hz_using != 0 ? rand() & 0b1111 : hz_using)
     {
 
     case 0:

@@ -10,7 +10,7 @@
                                      + (uint16_t)((sine(k * info->yhz[1])) * Y_AMPLITUDE(1))\
                                      + (uint16_t)((sine(k * info->yhz[2])) * Y_AMPLITUDE(2))\
                                      + (uint16_t)((sine(k * info->yhz[3])) * Y_AMPLITUDE(3))\
-                                     + (uint16_t)((sine(k * info->yhz[3])) * Y_AMPLITUDE(4));
+                                     + (uint16_t)((sine(k * info->yhz[4])) * Y_AMPLITUDE(4));
 
 #define SET_Y4 data_array[j].laser_y = (uint16_t)((sine(k * info->yhz[0])) * Y_AMPLITUDE(0))\
                                      + (uint16_t)((sine(k * info->yhz[1])) * Y_AMPLITUDE(1))\
@@ -32,7 +32,7 @@
                                      + (uint16_t)((sine(k * info->xhz[1])) * X_AMPLITUDE(1))\
                                      + (uint16_t)((sine(k * info->xhz[2])) * X_AMPLITUDE(2))\
                                      + (uint16_t)((sine(k * info->xhz[3])) * X_AMPLITUDE(3))\
-                                     + (uint16_t)((sine(k * info->xhz[3])) * X_AMPLITUDE(4));
+                                     + (uint16_t)((sine(k * info->xhz[4])) * X_AMPLITUDE(4));
 
 #define SET_X4 data_array[j].laser_x = (uint16_t)((sine(k * info->xhz[0])) * X_AMPLITUDE(0))\
                                      + (uint16_t)((sine(k * info->xhz[1])) * X_AMPLITUDE(1))\

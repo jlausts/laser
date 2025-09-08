@@ -73,8 +73,8 @@ void make_chord(ChordInfo *info, const bool one_hz, const float base_hz, const u
 
     if (one_hz)
     {
-        info->xhz[0] = info->other_hz[random(info->other_hz_count)];// + (float)(rand() & 255) / ((255 / MAX_OUT_TUNE) + MAX_OUT_TUNE/2);
-        info->yhz[0] = info->other_hz[random(info->other_hz_count)];// + (float)(rand() & 255) / ((255 / MAX_OUT_TUNE) + MAX_OUT_TUNE/2);
+        info->xhz[0] = info->other_hz[random(info->other_hz_count)] + (float)(rand() & 255) / ((255 / MAX_OUT_TUNE) + MAX_OUT_TUNE/2);
+        info->yhz[0] = info->other_hz[random(info->other_hz_count)] + (float)(rand() & 255) / ((255 / MAX_OUT_TUNE) + MAX_OUT_TUNE/2);
         info->xhz[0] *= HZ_MULT;
         info->yhz[0] *= HZ_MULT;
         return;
@@ -90,8 +90,7 @@ void make_chord(ChordInfo *info, const bool one_hz, const float base_hz, const u
         info->other_hz[hz_count] = tmp_hz;
     
     info->other_hz_count = hz_count;
-
-    switch (hz_using != 0 ? rand() & 0b1111 : hz_using)
+    switch (hz_using == 0 ? rand() & 0b1111 : hz_using)
     {
 
     case 0:

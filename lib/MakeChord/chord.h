@@ -6,6 +6,7 @@
 #include <stdbool.h>
 #include "sam.h"
 
+#define ARR_LEN 6
 typedef struct
 {
     uint8_t x_count, y_count, r, g, b, other_hz_count;
@@ -16,7 +17,7 @@ typedef struct
     float base_hz;
     float rotate_angle, rotate_angle_start, rotate_angle_step;
     float xamp_start, xamp_step, yamp_start, yamp_step;
-    float xhz[5], yhz[5], xamp1[5], yamp1[5], xamp[5], yamp[5];
+    float xhz[ARR_LEN], yhz[ARR_LEN], xamp1[ARR_LEN], yamp1[ARR_LEN], xamp[ARR_LEN], yamp[ARR_LEN];
     float other_hz[16];
 } 
 ChordInfo;

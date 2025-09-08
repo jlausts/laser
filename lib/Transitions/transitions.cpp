@@ -20,7 +20,7 @@ static constexpr double TAU = 6.283185307179586;
 #define RANDOM_ROTATION_ANGLE 0.5f
 
 
-
+extern inline void write_color(volatile const Data *const info);
 
 
 void println(){}
@@ -67,7 +67,66 @@ void println(const double &first, const Args&... rest) {
     println(rest...);
 }
 
+void ftoa4(char *buf, float val)
+{
+    // Handle sign
+    if (val < 0.0f) {
+        *buf++ = '-';
+        val = -val;
+    }
 
+    // Integer part
+    int32_t int_part = (int32_t)val;
+    float frac = val - (float)int_part;
+
+    // Convert integer part
+    char tmp[16];
+    int i = 0;
+    do {
+        tmp[i++] = '0' + (int_part % 10);
+        int_part /= 10;
+    } while (int_part > 0);
+    while (i > 0) {
+        *buf++ = tmp[--i];
+    }
+
+    // Decimal point
+    *buf++ = '.';
+
+    // Fractional part (4 digits)
+    for (int j = 0; j < 4; j++) {
+        frac *= 10.0f;
+        int d = (int)frac;
+        *buf++ = '0' + d;
+        frac -= d;
+    }
+    *buf = '\0';
+}
+
+void show_hz(ChordInfo *info, const char *end="\n")
+{
+    char buf[512];
+    char tmp[32];
+    buf[0] = '\0';
+
+    // Helper lambda to append arrays
+    auto append_array = [&](float *arr, int c) {
+        for (int i = 0; i < c; i++) {
+            ftoa4(tmp, arr[i]);
+            strcat(buf, tmp);
+            if (i < 4) strcat(buf, " ");
+        }
+        strcat(buf, "\n");
+    };
+
+    append_array(info->xhz, info->x_count);
+    append_array(info->yhz, info->y_count);
+    append_array(info->xamp1, info->x_count);
+    append_array(info->yamp1, info->y_count);
+    strcat(buf, end);
+
+    Serial.println(buf);
+}
 
 void rotate_point_and_clamp2(volatile Data *const data_array, const float angle, const float cx, const float cy)
 {
@@ -89,6 +148,8 @@ inline void wait_for_empty_array()
     while (!(*empty));
 }
 
+
+
 void transitioner(volatile Data *const data_array, const ChordInfo *const info)
 {
     float angle = info->rotate_angle_start;
@@ -98,8 +159,8 @@ void transitioner(volatile Data *const data_array, const ChordInfo *const info)
     float y_offset = info->y_offset_start;
     // println(angle, info->rotate_angle_step*1e6, xamp*1e3, info->xamp_step * 1e6, "\n");
     // println((xamp+yamp) * 0.5f);
-
     // no offset
+
     if (x_offset == 0 && y_offset == 0)
     {
         switch (info->x_count << 4 | info->y_count)
@@ -401,6 +462,7 @@ void shaker(ChordInfo *const info)
 {
     const float mult = 25 * PI;
     int i = 100;
+    const float shake_mult = 40;
     for (; i < 500; ++i, info->alpha_angle += info->alpha_angle_step)
     {
         info->rotate_angle_start = info->alpha_angle;
@@ -408,12 +470,12 @@ void shaker(ChordInfo *const info)
 
         float ex = e_to_x(i);
         float ex_plus1 = 1 + ex;
-        float der1 = (cosine(mult / ex_plus1) - 1) * mult * ex / (ex_plus1 * ex_plus1) * 50;
+        float der1 = (cosine(mult / ex_plus1) - 1) * mult * ex / (ex_plus1 * ex_plus1) * shake_mult;
         info->x_offset_start = der1 + 409; //sine(e_to_x(i) * PI * 20) * 0.5f * 100 + 409-50;
 
         ex = e_to_x(i+1);
         ex_plus1 = 1 + ex;
-        float der2 = (cosine(mult / ex_plus1) - 1) * mult * ex / ex_plus1 / ex_plus1 * 50;
+        float der2 = (cosine(mult / ex_plus1) - 1) * mult * ex / ex_plus1 / ex_plus1 * shake_mult;
 
         info->x_offset_step = (der2 - der1) / LEN;
         wait_then_make(false, info);
@@ -424,12 +486,12 @@ void shaker(ChordInfo *const info)
 
     float ex = e_to_x(i++);
     float ex_plus1 = 1 + ex;
-    float der1 = (cosine(mult / ex_plus1) - 1) * mult * ex / (ex_plus1 * ex_plus1) * 50;
+    float der1 = (cosine(mult / ex_plus1) - 1) * mult * ex / (ex_plus1 * ex_plus1) * shake_mult;
     info->x_offset_start = der1 + 409; //sine(e_to_x(i) * PI * 20) * 0.5f * 100 + 409-50;
 
     ex = e_to_x(i);
     ex_plus1 = 1 + ex;
-    float der2 = (cosine(mult / ex_plus1) - 1) * mult * ex / ex_plus1 / ex_plus1 * 50;
+    float der2 = (cosine(mult / ex_plus1) - 1) * mult * ex / ex_plus1 / ex_plus1 * shake_mult;
     info->x_offset_step = (der2 - der1) / LEN;
     wait_then_make(true, info, false);
 
@@ -440,12 +502,12 @@ void shaker(ChordInfo *const info)
 
         float ex = e_to_x(i);
         float ex_plus1 = 1 + ex;
-        float der1 = (cosine(mult / ex_plus1) - 1) * mult * ex / (ex_plus1 * ex_plus1) * 50;
+        float der1 = (cosine(mult / ex_plus1) - 1) * mult * ex / (ex_plus1 * ex_plus1) * shake_mult;
         info->x_offset_start = der1 + 409; //sine(e_to_x(i) * PI * 20) * 0.5f * 100 + 409-50;
 
         ex = e_to_x(i+1);
         ex_plus1 = 1 + ex;
-        float der2 = (cosine(mult / ex_plus1) - 1) * mult * ex / ex_plus1 / ex_plus1 * 50;
+        float der2 = (cosine(mult / ex_plus1) - 1) * mult * ex / ex_plus1 / ex_plus1 * shake_mult;
 
         info->x_offset_step = (der2 - der1) / LEN;
         wait_then_make(false, info);
@@ -577,7 +639,7 @@ void tornado_twist_power4(ChordInfo *const info)
 
 bool reborn(ChordInfo *const info, const int time=256)
 {
-    if (info->x_count == 5 && info->y_count == 5)
+    if (info->x_count == 5 || info->y_count == 5)
         return false;
 
     static ChordInfo new_info;
@@ -597,6 +659,7 @@ bool reborn(ChordInfo *const info, const int time=256)
     const int yc = info->y_count;
     info->xhz[xc] = new_info.xhz[0];
     info->yhz[yc] = new_info.yhz[0];
+
     info->x_count++;
     info->y_count++;
     
@@ -614,10 +677,10 @@ bool reborn(ChordInfo *const info, const int time=256)
         wait_then_make(false, info);
     }
 
-    info->xhz[xi] = new_info.xhz[0];
-    info->yhz[yi] = new_info.yhz[0];
-    info->xamp1[xi] = original_xamp;
-    info->yamp1[yi] = original_yamp;
+    info->xhz[xi] = info->xhz[xc];
+    info->yhz[yi] = info->yhz[yc];
+    info->xamp1[xi] = info->xamp1[xc];
+    info->yamp1[yi] = info->yamp1[yc];
     info->x_count--;
     info->y_count--;
 
@@ -1057,6 +1120,170 @@ void big_o(ChordInfo *const info, const int time=256)
     }
 }
 
+void circle_orbit(ChordInfo *const info, const int time=256)
+{    
+    static ChordInfo new_info;
+    const float count_inv = 0.5f / (float)time * TAU;
+
+    for (uint8_t i = 0; i < info->other_hz_count; ++i)
+        new_info.other_hz[i] = info->other_hz[i];
+    new_info.other_hz_count = info->other_hz_count;
+
+    make_chord(&new_info, false, info->base_hz, info->x_count + info->y_count);
+
+    // search for the closest hz on the x and y
+    uint8_t xhz = 0, yhz = 0;
+    float closest = __FLT_MAX__, closeness;
+    for (uint8_t x = 0; x < info->x_count; ++x)
+    {
+        for (uint8_t y = 0; y < info->y_count; ++y)
+        {
+            closeness = fabsf(info->xhz[x] - info->yhz[y]);
+            if (closeness < closest)
+            {
+                closest = closeness;
+                xhz = x;
+                yhz = y;
+            }
+        }
+    }
+
+    // equal hz not found, make one instead.
+    float new_hz = 0;
+    const float max_difference = 0.001f;
+    while (closest > max_difference)
+    {
+        constexpr float MAX_OUT_TUNE = .1f;
+        constexpr float HZ_MULT = TAU / 40000.0f;
+        for (int i = 0; i < info->other_hz_count; ++i)
+        {
+            new_hz = info->other_hz[i] + (float)(rand() & 255) / ((255 / MAX_OUT_TUNE) + MAX_OUT_TUNE/2);
+            new_hz *= HZ_MULT;
+            closest = fabsf(new_hz - info->xhz[xhz]);
+            if (closest < max_difference)
+                break;
+        }
+    }
+
+    // merge the new hz into the shape
+    if (new_hz != 0)
+    {
+        const float original_yamp = info->yamp1[yhz];
+        const int yc = info->y_count;
+        info->yhz[yc] = new_hz;
+        info->y_count++;
+        
+        for (float j = 0, k = 0; j < time; j += 1, k += count_inv)
+        {
+            const float amp_mult = cosine(k) * 0.5f;
+            info->yamp1[yhz] = original_yamp * amp_mult;
+            info->yamp1[yc] = original_yamp - info->yamp1[yhz];
+
+            info->rotate_angle_start = info->alpha_angle;
+            info->rotate_angle_step = info->alpha_angle_step / (float)LEN;
+            info->alpha_angle += info->alpha_angle_step;
+            wait_then_make(false, info);
+        }
+
+        info->yhz[yhz] = new_hz;
+        info->yamp1[yhz] = original_yamp;
+        info->y_count--;
+    }
+
+
+    // make a list of the hz's index that can be removed
+    float x_original[5], y_original[5];
+    for (uint8_t i = 0; i < info->x_count; ++i)
+        x_original[i] = info->xamp1[i];
+    for (uint8_t i = 0; i < info->y_count; ++i)
+        y_original[i] = info->yamp1[i];
+    
+    // remove all hz's that are not those two close ones at the same time with cosine.
+    // and, move to one side a little bit.
+    for (float j = 0, k = 0; j < time; j += 1, k += count_inv)
+    {
+        const float amp_mult = cosine(k) * 0.5f;
+        float xhz_add = 0, yhz_add = 0;
+
+        for (uint8_t i = 0, j = 0; i < info->x_count; ++i, ++j)
+        {
+            if (i != xhz)
+            {
+                info->xamp1[j] = x_original[j] * amp_mult;
+                xhz_add += x_original[j] - info->xamp1[j];
+            }
+        }
+
+        for (uint8_t i = 0, j = 0; i < info->y_count; ++i, ++j)
+        {
+            if (i != yhz)
+            {
+                info->yamp1[j] = y_original[j] * amp_mult;
+                yhz_add += y_original[j] - info->yamp1[j];
+            }
+        }
+
+        info->xamp1[xhz] = x_original[xhz] + xhz_add;
+        info->yamp1[yhz] = y_original[yhz] + yhz_add;
+        info->rotate_angle_start = info->alpha_angle;
+        info->rotate_angle_step = info->alpha_angle_step / (float)LEN;
+        info->alpha_angle += info->alpha_angle_step;
+        wait_then_make(false, info);
+    }
+
+    // merge the new hz's into the info struct
+    for (uint8_t i = 0; i < info->x_count; ++i)
+    {
+        if (i != xhz)
+        {
+            info->xhz[i] = new_info.xhz[i];
+            // x_original[i] = new_info.xamp1[i];
+        }
+    }
+
+    for (uint8_t i = 0; i < info->y_count; ++i)
+    {
+        if (i != yhz)
+        {
+            info->yhz[i] = new_info.yhz[i];
+            // y_original[i] = new_info.yamp1[i];
+        }
+    }
+
+    // add the new hz's back to the big "O"
+    for (float j = 0, k = PI; j < time; j += 1, k += count_inv)
+    {
+        const float amp_mult = cosine(k) * 0.5f;
+        float xhz_add = 0, yhz_add = 0;
+
+        for (uint8_t i = 0, j = 0; i < info->x_count; ++i, ++j)
+        {
+            if (i != xhz)
+            {
+                info->xamp1[j] = x_original[j] * amp_mult;
+                xhz_add += x_original[j] - info->xamp1[j];
+            }
+        }
+
+        for (uint8_t i = 0, j = 0; i < info->y_count; ++i, ++j)
+        {
+            if (i != yhz)
+            {
+                info->yamp1[j] = y_original[j] * amp_mult;
+                yhz_add += y_original[j] - info->yamp1[j];
+            }
+        }
+        
+        info->xamp1[xhz] = x_original[xhz] + xhz_add;
+        info->yamp1[yhz] = y_original[yhz] + yhz_add;
+        info->rotate_angle_start = info->alpha_angle;
+        info->rotate_angle_step = info->alpha_angle_step / (float)LEN;
+        info->alpha_angle += info->alpha_angle_step;
+        wait_then_make(false, info);
+    }
+}
+
+
 
 void start_flow(ChordInfo *const info)
 {
@@ -1115,12 +1342,10 @@ void maintain_and_change(ChordInfo *info, const int wait=400)
 void transition(ChordInfo *info)
 {
     static uint8_t previous_num = 255;
-    const uint8_t num = random(9);
+    const uint8_t num = random(10);
 
-    for (int i = 0; i < 50; ++i)
-        Serial.println(random(9));
-
-    if (num == previous_num) 
+    // dont' do the same transition twice, and ensure that the color gets changed atleast every other transition
+    if (num == previous_num || (previous_num > 5 && num > 5)) 
     {
         transition(info);
         return;
@@ -1128,10 +1353,11 @@ void transition(ChordInfo *info)
 
     previous_num = num;
 
-    // one_twist_in_out(info);
+    // reborn(info);
     // maintain_shape(100, info);
     // cosine_transistion(info);
     // return;
+
 
     switch (num)
     {
@@ -1145,23 +1371,24 @@ void transition(ChordInfo *info)
         cosine_twister(info);
         break;
     case 3:
-        shaker(info);
+        one_twist_in(info);
         break;
     case 4:
+        one_twist_out(info);
+        break;
+    case 5:
+        one_twist_in_out(info);
+        break;
+    case 6:
         reborn(info, 200);
         reborn(info, 300);
         break;
-    case 5:
-        one_twist_in(info);
-        break;
-    case 6:
-        one_twist_out(info);
-        break;
     case 7:
-        big_o(info);
+        shaker(info);
         break;
     case 8:
-        one_twist_in_out(info);
+    case 9:
+        big_o(info);
         break;
     default:
         break;
@@ -1195,11 +1422,11 @@ void flow()
     // LINES DONT WORK. line spinner: go into a horizontal line, make the line spin slowly, turn into a shape, and then slow down the RPM
     // LINES DONT WORK. round line:   Go into a horizontal line then the line will open into a circle then add components until shape is generated
 
-    one-twist: do one full rotation, then cosine shrink, then grow while twisting once until back to full size.
+    // one-twist: do one full rotation, then cosine shrink, then grow while twisting once until back to full size.
 
-    big "o": remove one HZ at a time, and arrive at a perfect circle by adding a HZ identical to the other one,
-        then add the new HZ's back onto it. remove the seconds HZ require to make the circle at the end.
-        other base-shapes could be used, like a "figure 8"
+    // big "o": remove one HZ at a time, and arrive at a perfect circle by adding a HZ identical to the other one,
+    //     then add the new HZ's back onto it. remove the seconds HZ require to make the circle at the end.
+    //     other base-shapes could be used, like a "figure 8"
 
     circle orbit: Going to the horizontal line, then open into a circle that is slightly to the side of the shape space. 
         The circle will be rotating around the center then slowly add components until the shape is generated, 

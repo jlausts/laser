@@ -9,7 +9,7 @@
 #define ARR_LEN 6
 typedef struct
 {
-    uint8_t x_count, y_count, r, g, b, other_hz_count;
+    uint8_t x_count, y_count, r, g, b, other_hz_count, hz_using;
     uint16_t x_offset, y_offset, center_x, center_y;
     float x_offset_start, x_offset_step, y_offset_start, y_offset_step;
     float alpha_angle, alpha_angle_step;

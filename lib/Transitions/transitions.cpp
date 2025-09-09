@@ -12,6 +12,7 @@
 
 extern volatile Data data[2][256];
 static constexpr double TAU = 6.283185307179586;
+uint8_t hz_using_arr[8] = {3, 6, 9, 11, 12, 13, 14, 15};
 
 #define ROTATE_CLAMP rotate_point_and_clamp2(&data_array[j], angle, info->center_x, info->center_y);
 
@@ -457,7 +458,7 @@ void cosine_twister(ChordInfo *const info)
     info->yamp_step = 0;
     info->xamp_step = 0;
 }
-
+// would be nice to make the sudden transition from one shape to another when shaking to be less sudden.
 void shaker(ChordInfo *const info)
 {
     const float mult = 25 * PI;
@@ -943,21 +944,7 @@ void one_twist_in_out(ChordInfo *info)
     info->xamp_step = 0;
 }
 
-void spiral(ChordInfo *const info)
-{
-
-}
-
-void dissolver(ChordInfo *const info)
-{
-
-}
-
-void off_center_twist(ChordInfo *const info)
-{
-
-}
-
+// bug in here sometimes causing non-harmonic new frequency.
 void big_o(ChordInfo *const info, const int time=256)
 {    
     static ChordInfo new_info;
@@ -1120,6 +1107,126 @@ void big_o(ChordInfo *const info, const int time=256)
     }
 }
 
+
+bool remove_one(ChordInfo *const info, const int time=256)
+{
+    if (info->x_count == 2 || info->y_count == 2)
+        return false;
+
+    const float count_inv = 0.5f / (float)time * TAU;
+
+    static float new_xamps[5], new_yamps[5];
+    for (uint8_t i = 0; i < info->x_count; i++)
+        new_xamps[i] = (1.0f / (info->x_count - 1) * info->xamp1[i] * info->x_count) - info->xamp1[i];
+    for (uint8_t i = 0; i < info->y_count; i++)
+        new_yamps[i] = (1.0f / (info->y_count - 1) * info->yamp1[i] * info->y_count) - info->yamp1[i];
+
+    static float original_xamps[5], original_yamps[5];
+    for (uint8_t i = 0; i < info->x_count; i++)
+        original_xamps[i] = info->xamp1[i];
+    for (uint8_t i = 0; i < info->y_count; i++)
+        original_yamps[i] = info->yamp1[i];
+
+    const uint8_t xi = info->x_count - 1;
+    const uint8_t yi = info->y_count - 1;
+    const float original_xamp = info->xamp1[xi];
+    const float original_yamp = info->yamp1[yi];
+
+    for (float j = 0, k = 0; j < time; j += 1, k += count_inv)
+    {
+        const float amp_mult = cosine(k) * 0.5f;
+        info->xamp1[xi] = original_xamp * amp_mult;
+        info->yamp1[yi] = original_yamp * amp_mult;
+        
+        for (uint8_t i = 0; i < xi; ++i)
+            info->xamp1[i] = original_xamps[i] + (1.0f - amp_mult) * new_xamps[i];
+        for (uint8_t i = 0; i < yi; ++i)
+            info->yamp1[i] = original_yamps[i] + (1.0f - amp_mult) * new_yamps[i];
+
+        info->rotate_angle_start = info->alpha_angle;
+        info->rotate_angle_step = info->alpha_angle_step / (float)LEN;
+        info->alpha_angle += info->alpha_angle_step;
+        wait_then_make(false, info);
+    }
+
+    info->x_count--;
+    info->y_count--;
+
+    return true;
+}
+
+// Bug in here
+bool add_one(ChordInfo *const info, const int time=256)
+{
+    // can't add any more hz to this one.
+    if (info->hz_using >= 6)
+        return true;
+
+    static ChordInfo new_info;
+    for (uint8_t i = 0; i < info->other_hz_count; ++i)
+        new_info.other_hz[i] = info->other_hz[i];
+    new_info.other_hz_count = info->other_hz_count;
+
+    info->hz_using += 2;
+    make_chord(&new_info, false, info->base_hz, hz_using_arr[info->hz_using]);
+
+    const float count_inv = 0.5f / (float)time * TAU;
+
+    static float original_xamps[5], original_yamps[5];
+    for (uint8_t i = 0; i < info->x_count; i++)
+        original_xamps[i] = info->xamp1[i];
+    for (uint8_t i = 0; i < info->y_count; i++)
+        original_yamps[i] = info->yamp1[i];
+
+    const float new_xamp = new_info.xamp1[new_info.x_count];
+    const float new_yamp = new_info.yamp1[new_info.y_count];
+    const float xamp_mult =  new_xamp / info->x_count;
+    const float yamp_mult =  new_yamp / info->y_count;
+    info->xhz[info->x_count] = new_info.xhz[new_info.x_count];
+    info->xhz[info->y_count] = new_info.yhz[new_info.y_count];
+    const uint8_t xc = info->x_count ++;
+    const uint8_t yc = info->y_count ++;
+
+    show_hz(info);
+    
+    for (float j = 0, k = PI; j < time; j += 1, k += count_inv)
+    {
+        // float amp_sum = 0;
+        const float amp_mult = cosine(k) * 0.5f;
+        for (uint8_t i = 0; i < xc; ++i)
+            info->xamp1[i] = original_xamps[i] - amp_mult * xamp_mult;
+        for (uint8_t i = 0; i < yc; ++i)
+            info->yamp1[i] = original_yamps[i] - amp_mult * yamp_mult;
+
+        info->xamp1[xc] = new_xamp * amp_mult;
+        info->yamp1[yc] = new_yamp * amp_mult;
+        // amp_sum += new_xamp * amp_mult;
+        // Serial.println(amp_sum);
+
+        info->rotate_angle_start = info->alpha_angle;
+        info->rotate_angle_step = info->alpha_angle_step / (float)LEN;
+        info->alpha_angle += info->alpha_angle_step;
+        wait_then_make(false, info);
+    }
+
+    return false;
+}
+
+void spiral(ChordInfo *const info)
+{
+
+}
+// Not Done.
+void dissolver(ChordInfo *const info)
+{
+
+}
+// Not Done
+void off_center_twist(ChordInfo *const info)
+{
+
+}
+// Not Done.
 void circle_orbit(ChordInfo *const info, const int time=256)
 {    
     static ChordInfo new_info;
@@ -1353,7 +1460,7 @@ void transition(ChordInfo *info)
 
     previous_num = num;
 
-    // reborn(info);
+    // remove_one(info);
     // maintain_shape(100, info);
     // cosine_transistion(info);
     // return;
@@ -1390,6 +1497,9 @@ void transition(ChordInfo *info)
     case 9:
         big_o(info);
         break;
+    case 10:
+        if (remove_one(info))
+            transition(info);
     default:
         break;
     }

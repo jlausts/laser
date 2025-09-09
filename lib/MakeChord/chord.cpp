@@ -89,6 +89,8 @@ void make_chord(ChordInfo *info, const bool one_hz, const float base_hz, const u
     for (float tmp_hz = hz; tmp_hz <= 1024; tmp_hz += hz, ++hz_count)
         info->other_hz[hz_count] = tmp_hz;
     
+    
+
     info->other_hz_count = hz_count;
     switch (hz_using == 0 ? rand() & 0b1111 : hz_using)
     {
@@ -98,6 +100,7 @@ void make_chord(ChordInfo *info, const bool one_hz, const float base_hz, const u
     case 2:
     case 3:
     {
+        info->hz_using = 0;
         info->x_count = 2;
         info->y_count = 2;
 
@@ -117,6 +120,7 @@ void make_chord(ChordInfo *info, const bool one_hz, const float base_hz, const u
     case 5:
     case 6:
     {
+        info->hz_using = 1;
         info->x_count = 3;
         info->y_count = 2;
 
@@ -137,6 +141,7 @@ void make_chord(ChordInfo *info, const bool one_hz, const float base_hz, const u
     case 8:
     case 9:
     {
+        info->hz_using = 2;
         info->x_count = 2;
         info->y_count = 3;
 
@@ -156,6 +161,7 @@ void make_chord(ChordInfo *info, const bool one_hz, const float base_hz, const u
     case 10:
     case 11:
     {
+        info->hz_using = 3;
         info->x_count = 3;
         info->y_count = 3;
 
@@ -175,6 +181,7 @@ void make_chord(ChordInfo *info, const bool one_hz, const float base_hz, const u
 
     case 12:
     {
+        info->hz_using = 4;
         info->x_count = 4;
         info->y_count = 3;
 
@@ -195,6 +202,7 @@ void make_chord(ChordInfo *info, const bool one_hz, const float base_hz, const u
 
     case 13:
     {
+        info->hz_using = 5;
         info->x_count = 3;
         info->y_count = 4;
 
@@ -215,6 +223,7 @@ void make_chord(ChordInfo *info, const bool one_hz, const float base_hz, const u
 
     case 14:
     {
+        info->hz_using = 6;
         info->x_count = 4;
         info->y_count = 4;
 
@@ -236,6 +245,7 @@ void make_chord(ChordInfo *info, const bool one_hz, const float base_hz, const u
 
     case 15:
     {
+        info->hz_using = 7;
         info->x_count = 5;
         info->y_count = 5;
         //np.array([255, 0]) / 4080 + .2 - .03125

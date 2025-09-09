@@ -110,6 +110,9 @@ void show_hz(ChordInfo *info, const char *end="\n")
     char tmp[32];
     buf[0] = '\0';
 
+    ftoa4(tmp, info->base_hz);
+    strcat(buf, tmp);
+    strcat(buf, "\n");
     // Helper lambda to append arrays
     auto append_array = [&](float *arr, int c) {
         for (int i = 0; i < c; i++) {
@@ -120,8 +123,17 @@ void show_hz(ChordInfo *info, const char *end="\n")
         strcat(buf, "\n");
     };
 
-    append_array(info->xhz, info->x_count);
-    append_array(info->yhz, info->y_count);
+    auto append_array_hz = [&](float *arr, int c) {
+        for (int i = 0; i < c; i++) {
+            ftoa4(tmp, arr[i] / (6.28 / 40000.0f));
+            strcat(buf, tmp);
+            if (i < 4) strcat(buf, " ");
+        }
+        strcat(buf, "\n");
+    };
+
+    append_array_hz(info->xhz, info->x_count);
+    append_array_hz(info->yhz, info->y_count);
     append_array(info->xamp1, info->x_count);
     append_array(info->yamp1, info->y_count);
     strcat(buf, end);
@@ -944,7 +956,6 @@ void one_twist_in_out(ChordInfo *info)
     info->xamp_step = 0;
 }
 
-// bug in here sometimes causing non-harmonic new frequency.
 void big_o(ChordInfo *const info, const int time=256)
 {    
     static ChordInfo new_info;
@@ -954,7 +965,7 @@ void big_o(ChordInfo *const info, const int time=256)
         new_info.other_hz[i] = info->other_hz[i];
     new_info.other_hz_count = info->other_hz_count;
 
-    make_chord(&new_info, false, info->base_hz, info->x_count + info->y_count);
+    make_chord(&new_info, false, info->base_hz, hz_count_to_num_hz(info->x_count, info->y_count));
 
     // search for the closest hz on the x and y
     uint8_t xhz = 0, yhz = 0;
@@ -1061,7 +1072,6 @@ void big_o(ChordInfo *const info, const int time=256)
         if (i != xhz)
         {
             info->xhz[i] = new_info.xhz[i];
-            // x_original[i] = new_info.xamp1[i];
         }
     }
 
@@ -1070,9 +1080,12 @@ void big_o(ChordInfo *const info, const int time=256)
         if (i != yhz)
         {
             info->yhz[i] = new_info.yhz[i];
-            // y_original[i] = new_info.yamp1[i];
         }
-    }
+    }    
+    
+    info->x_count = new_info.x_count;
+    info->y_count = new_info.y_count;
+
 
     // add the new hz's back to the big "O"
     for (float j = 0, k = PI; j < time; j += 1, k += count_inv)
@@ -1105,8 +1118,8 @@ void big_o(ChordInfo *const info, const int time=256)
         info->alpha_angle += info->alpha_angle_step;
         wait_then_make(false, info);
     }
-}
 
+}
 
 bool remove_one(ChordInfo *const info, const int time=256)
 {
@@ -1460,10 +1473,10 @@ void transition(ChordInfo *info)
 
     previous_num = num;
 
-    // remove_one(info);
-    // maintain_shape(100, info);
-    // cosine_transistion(info);
-    // return;
+    big_o(info);
+    maintain_shape(100, info);
+    cosine_transistion(info);
+    return;
 
 
     switch (num)

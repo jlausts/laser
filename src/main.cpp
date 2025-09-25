@@ -299,6 +299,34 @@ void make_shapes()
     }
 }
 
+// run this before the ISR starts up
+void calibration_square(const int delay_time = 1000, const uint8_t light_intensity = 255)
+{
+    volatile Data info = {.r=light_intensity, .g=light_intensity, .b=light_intensity};
+    write_color(&info);
+    while(1)
+    {
+        info.laser_x = 0;
+        info.laser_y = 0;
+        write_laser(&info);
+        delayMicroseconds(delay_time);
+        
+        info.laser_x = 4095;
+        info.laser_y = 0;
+        write_laser(&info);
+        delayMicroseconds(delay_time);
+
+        info.laser_x = 4095;
+        info.laser_y = 4095;
+        write_laser(&info);
+        delayMicroseconds(delay_time);
+
+        info.laser_x = 0;
+        info.laser_y = 4095;
+        write_laser(&info);
+        delayMicroseconds(delay_time);
+    }
+}
 
 // takes 3.211us
 // runs 12.8% of the time.
@@ -353,6 +381,8 @@ void setup()
     pwmSetup(RGB_CH_GREEN, 0);
     pwmSetup(RGB_CH_BLUE, 0);
 
+    // calibration_square();
+
 #ifdef USE_SERIAL1
     Serial1.begin(2000000);    // 2 Mbps to match ESP32-S3
     Serial1.setTimeout(10); // 10 ms timeout
@@ -383,6 +413,8 @@ void setup()
 
 void loop()
 {
+
+
 
 
 

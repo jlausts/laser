@@ -81,7 +81,7 @@ void make_chord(ChordInfo *info, const bool one_hz, const float base_hz, const u
     }
 
     // random hz between 64 and 128 to 1/32 precision
-    const float hz = (base_hz == 0 ? (float)(((uint16_t)rand() & (2048 - 1)) | 1024) / 16.0f : base_hz);
+    const float hz = 82;//(base_hz == 0 ? (float)(((uint16_t)rand() & (2048 - 1)) | 1024) / 16.0f : base_hz);
     info->base_hz = hz;
 
 

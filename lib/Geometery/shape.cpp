@@ -90,9 +90,9 @@ void random_color(ChordInfo *const info)
     info->r <<= 3;
     info->g <<= 3;
     info->b <<= 3;
-    // info->r = 255;
-    // info->g = 255;
-    // info->b = 255;
+    // info->r = 220;
+    // info->g = 220;
+    // info->b = 220;
 }
 
 void rotate_point_and_clamp(volatile Data *const data_array, const float angle, const float cx, const float cy)

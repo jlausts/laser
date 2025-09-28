@@ -1,4 +1,3 @@
-#include "sigmoid.h"
 const float exp_arr[4096] = {
 22026.46579481f,
 21919.15070532f,
@@ -4097,12 +4096,3 @@ const float exp_arr[4096] = {
 4.562e-05f,
 4.54e-05
 };
-
-
-
-float e_to_x(const float x)
-{
-    return exp_arr[(x >= sizeof(exp_arr) / sizeof(float) ? sizeof(exp_arr) / sizeof(float) - 1 : (x < 0 ? 0 : (int)(x + 0.5f)))];
-}
-
-int ex_len = sizeof(exp_arr) / sizeof(float);

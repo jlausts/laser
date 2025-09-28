@@ -617,17 +617,17 @@ void cosine_twister(ChordInfo *const info)
 }
 
 void shake_calc(ChordInfo *const info, const int i, const float center, 
-    const float mult = 25*PI, const float shake_mult = 40)
+    const float mult = 25*PI, const float shake_mult = 60/*was 40*/)
 {
     info->rotate_angle_start = info->alpha_angle;
     info->rotate_angle_step = info->alpha_angle_step / (float)LEN;
 
-    float ex = e_to_x(i);
+    float ex = e_to_x((float)i * 4.096f);
     float ex_plus1 = 1 + ex;
     float der1 = (cosine(mult / ex_plus1) - 1) * mult * ex / (ex_plus1 * ex_plus1) * shake_mult;
     info->x_offset_start = der1 + center; 
 
-    ex = e_to_x(i+1);
+    ex = e_to_x((float)(i+1) * 4.096f);
     ex_plus1 = 1 + ex;
     float der2 = (cosine(mult / ex_plus1) - 1) * mult * ex / ex_plus1 / ex_plus1 * shake_mult;
     info->x_offset_step = (der2 - der1) / LEN;  
@@ -645,7 +645,7 @@ void shaker(ChordInfo *const info)
     const float center = info->x_offset_start;
     const int first_part = 390;
     const int total_transition_count = 610;
-
+    const int ex_end = 900;
 
     ChordInfo new_info = {.x_count = info->x_count, .y_count = info->y_count};
     make_chord(&new_info, false, 0.0f, hz_count_to_num_hz(new_info.x_count, new_info.y_count));
@@ -710,7 +710,7 @@ void shaker(ChordInfo *const info)
 
     shake_calc(info, i, center, mult*PI);
 
-    for (; i < 900; ++i, info->alpha_angle += info->alpha_angle_step)
+    for (; i < ex_end; ++i, info->alpha_angle += info->alpha_angle_step)
         shake_calc(info, i, center, mult*PI);
 
     clean_hz(info);
@@ -1651,6 +1651,104 @@ bool add_one(ChordInfo *const info)
     return false;
 }
 
+void around_the_world(ChordInfo *const info)
+{    
+    const float start_mult = 0.1f;
+    float grow_speed = (float)(rand()&255) / (256.0f * 300.0f) + 0.001f; // .001 -> .005
+    const float offset_add = (1 - max_amp) * 0.5f * 4096;
+    float cosine_adder = grow_speed * PI / (1.0f - start_mult);
+    float rotate_adder = cosine_adder * 0.5f;
+    info->orbit = true;
+    int rotations = (rand() & 3) + 1; // 1 -> 32
+    const float offset_mult = 2048;
+    const float rotate2_mult = rotations * TAU;
+    float cos = PI;
+    float rotate_cos = PI;
+    float ex = 0;
+    float ex_step = grow_speed * (ex_len>>1) / (1.0f - start_mult);
+
+    // rotations += 2;
+    // if (rotations > 40)
+    //     rotations = 1;
+
+    for (float amp_mult = 1; amp_mult > start_mult; 
+        amp_mult -= grow_speed, info->alpha_angle += info->alpha_angle_step, cos += cosine_adder, rotate_cos += rotate_adder, ex += ex_step)
+    {
+        info->rotate_angle_start = info->alpha_angle;
+        info->rotate_angle_step = info->alpha_angle_step / (float)LEN;
+
+        const float new_amp = sine(((amp_mult + 1.5f) * 0.5f) * TAU) * 0.5f;
+        const float offset = (1.0f - new_amp) * 2048;
+        const float new_amp2 = sine(((amp_mult + 1.5f + grow_speed) * 0.5f) * TAU) * 0.5f;
+        const float offset2 = (1.0f - new_amp2) * 2048;
+
+        info->x_offset_start = offset * max_amp + offset_add;
+        info->x_offset_step = (offset2 - offset) / (float)LEN;
+        info->y_offset_start = info->x_offset_start;
+        info->y_offset_step = info->x_offset_step;
+        info->xamp_start = new_amp * max_amp;
+        info->xamp_step = (new_amp2 - new_amp) / (float)LEN;
+        info->yamp_start = info->xamp_start;
+        info->yamp_step = info->xamp_step;
+
+        info->rotate_angle_start2 = e_to_x(ex)/(1+e_to_x(ex)) * rotate2_mult;
+        info->x2_offset_start = cosine(cos) * 0.5f * offset_mult;
+
+        info->x2_offset_step = (cosine(cos + cosine_adder) * 0.5f * offset_mult - info->x2_offset_start) / (float)LEN;
+        info->rotate_angle_step2 = (e_to_x(ex + ex_step)/(1+e_to_x(ex + ex_step)) * rotate2_mult - info->rotate_angle_start2) / (float)LEN;
+        wait_then_make(false, info);
+    } 
+
+    // random angle -.3 -> +.3
+    const float total_angle = ((float)(rand() & 1023) / (1023/RANDOM_ROTATION_ANGLE/2) - RANDOM_ROTATION_ANGLE) * TAU;
+    const float total_steps = (1.0f / grow_speed) + (1.0f / grow_speed) + stable_time - 2.0f;
+    info->alpha_angle_step = total_angle / total_steps;
+    info->alpha_angle = RANDOM_ROTATION_ANGLE * 5 * TAU;
+    
+    // wait_then_make(true, info);
+
+    bool first = true;
+    for (float amp_mult = start_mult; amp_mult < 1; 
+        amp_mult += grow_speed, info->alpha_angle += info->alpha_angle_step, cos += cosine_adder, rotate_cos += rotate_adder, ex += ex_step)
+    {
+        info->rotate_angle_start = info->alpha_angle;
+        info->rotate_angle_step = info->alpha_angle_step / (float)LEN;
+
+        const float new_amp = sine(((amp_mult + 1.5f) * 0.5f) * TAU) * 0.5f;
+        const float offset = (1.0f - new_amp) * 2048;
+        const float new_amp2 = sine(((amp_mult + 1.5f + grow_speed) * 0.5f) * TAU) * 0.5f;
+        const float offset2 = (1.0f - new_amp2) * 2048;
+
+        info->x_offset_start = offset * max_amp + offset_add;
+        info->x_offset_step = (offset2 - offset) / (float)LEN;
+        info->y_offset_start = info->x_offset_start;
+        info->y_offset_step = info->x_offset_step;
+        info->xamp_start = new_amp * max_amp;
+        info->xamp_step = (new_amp2 - new_amp) / (float)LEN;
+        info->yamp_start = info->xamp_start;
+        info->yamp_step = info->xamp_step;
+
+        info->rotate_angle_start2 = e_to_x(ex)/(1+e_to_x(ex)) * rotate2_mult;
+        info->x2_offset_start = cosine(cos) * 0.5f * offset_mult;
+
+        info->x2_offset_step = (cosine(cos + cosine_adder) * 0.5f * offset_mult - info->x2_offset_start) / (float)LEN;
+        info->rotate_angle_step2 = (e_to_x(ex + ex_step)/(1+e_to_x(ex + ex_step)) * rotate2_mult - info->rotate_angle_start2) / (float)LEN;
+        wait_then_make(first, info);
+        first = false;
+    }
+
+    info->alpha_angle = info->rotate_angle_start + info->alpha_angle_step;
+    info->x_offset_start += info->x_offset_step;
+    info->y_offset_start += info->y_offset_step;
+    info->xamp_start += info->yamp_step;
+    info->yamp_start += info->xamp_step;
+    info->x_offset_step = 0;
+    info->y_offset_step = 0;
+    info->yamp_step = 0;
+    info->xamp_step = 0;
+    info->orbit = false;
+}
+
 void spiral(ChordInfo *const info)
 {
 
@@ -1666,96 +1764,6 @@ void off_center_twist(ChordInfo *const info)
 
 }
 // Not Done.
-
-
-
-void around_the_world(ChordInfo *const info, const int time=256)
-{    
-    const float start_mult = 0.1f;
-    float grow_speed = (float)(rand()&255) / (256.0f * 300.0f) + 0.001f; // .001 -> .005
-    const float offset_add = (1 - max_amp) * 0.5f * 4096;
-    float cosine_adder = grow_speed * PI / (1.0f - start_mult);
-    float rotate_adder = cosine_adder * 0.5f;
-    info->orbit = true;
-    const float rotate2_mult = 3 * TAU;
-    float cos = PI;
-    float rotate_cos = PI;
-
-    for (float amp_mult = 1; amp_mult > start_mult; 
-        amp_mult -= grow_speed, info->alpha_angle += info->alpha_angle_step, cos += cosine_adder, rotate_cos += rotate_adder)
-    {
-        info->rotate_angle_start = info->alpha_angle;
-        info->rotate_angle_step = info->alpha_angle_step / (float)LEN;
-
-        const float new_amp = sine(((amp_mult + 1.5f) * 0.5f) * TAU) * 0.5f;
-        const float offset = (1.0f - new_amp) * 2048;
-        const float new_amp2 = sine(((amp_mult + 1.5f + grow_speed) * 0.5f) * TAU) * 0.5f;
-        const float offset2 = (1.0f - new_amp2) * 2048;
-
-        info->x_offset_start = offset * max_amp + offset_add;
-        info->x_offset_step = (offset2 - offset) / (float)LEN;
-        info->y_offset_start = info->x_offset_start;
-        info->y_offset_step = info->x_offset_step;
-        info->xamp_start = new_amp * max_amp;
-        info->xamp_step = (new_amp2 - new_amp) / (float)LEN;
-        info->yamp_start = info->xamp_start;
-        info->yamp_step = info->xamp_step;
-
-        info->rotate_angle_start2 = cosine(rotate_cos) * 0.5f * rotate2_mult;
-        info->x2_offset_start = cosine(cos) * 0.5f * 1024.0f;
-
-        info->x2_offset_step = (cosine(cos + cosine_adder) * 0.5f * 1024.0f - info->x2_offset_start) / (float)LEN;
-        info->rotate_angle_step2 = (cosine(rotate_cos + rotate_adder) * 0.5f * rotate2_mult - info->rotate_angle_start2) / (float)LEN;
-        wait_then_make(false, info);
-    } 
-
-    // random angle -.3 -> +.3
-    const float total_angle = ((float)(rand() & 1023) / (1023/RANDOM_ROTATION_ANGLE/2) - RANDOM_ROTATION_ANGLE) * TAU;
-    const float total_steps = (1.0f / grow_speed) + (1.0f / grow_speed) + stable_time - 2.0f;
-    info->alpha_angle_step = total_angle / total_steps;
-    info->alpha_angle = RANDOM_ROTATION_ANGLE * 5 * TAU;
-    wait_then_make(true, info);
-
-    for (float amp_mult = start_mult; amp_mult < 1; 
-        amp_mult += grow_speed, info->alpha_angle += info->alpha_angle_step, cos += cosine_adder, rotate_cos += rotate_adder)
-    {
-        info->rotate_angle_start = info->alpha_angle;
-        info->rotate_angle_step = info->alpha_angle_step / (float)LEN;
-
-        const float new_amp = sine(((amp_mult + 1.5f) * 0.5f) * TAU) * 0.5f;
-        const float offset = (1.0f - new_amp) * 2048;
-        const float new_amp2 = sine(((amp_mult + 1.5f + grow_speed) * 0.5f) * TAU) * 0.5f;
-        const float offset2 = (1.0f - new_amp2) * 2048;
-
-        info->x_offset_start = offset * max_amp + offset_add;
-        info->x_offset_step = (offset2 - offset) / (float)LEN;
-        info->y_offset_start = info->x_offset_start;
-        info->y_offset_step = info->x_offset_step;
-        info->xamp_start = new_amp * max_amp;
-        info->xamp_step = (new_amp2 - new_amp) / (float)LEN;
-        info->yamp_start = info->xamp_start;
-        info->yamp_step = info->xamp_step;
-
-        info->rotate_angle_start2 = cosine(rotate_cos) * 0.5f * rotate2_mult;
-        info->x2_offset_start = cosine(cos) * 0.5f * 1024.0f;
-
-        info->x2_offset_step = (cosine(cos + cosine_adder) * 0.5f * 1024.0f - info->x2_offset_start) / (float)LEN;
-        info->rotate_angle_step2 = (cosine(rotate_cos + rotate_adder) * 0.5f * rotate2_mult - info->rotate_angle_start2) / (float)LEN;
-
-        wait_then_make(false, info);
-    }
-
-    info->alpha_angle = info->rotate_angle_start + info->alpha_angle_step;
-    info->x_offset_start += info->x_offset_step;
-    info->y_offset_start += info->y_offset_step;
-    info->xamp_start += info->yamp_step;
-    info->yamp_start += info->xamp_step;
-    info->x_offset_step = 0;
-    info->y_offset_step = 0;
-    info->yamp_step = 0;
-    info->xamp_step = 0;
-    info->orbit = false;
-}
 
 
 
@@ -1826,10 +1834,11 @@ void transition(ChordInfo *info)
 
     previous_num = num;
 
-    // around_the_world(info);
-    // cosine_twister(info);
-    // maintain_shape(200, info);
-    // return;
+    around_the_world(info);
+    // shaker(info);
+    cosine_twister(info);
+    maintain_shape(200, info);
+    return;
 
 
     switch (num)

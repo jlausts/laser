@@ -75,7 +75,7 @@ void random_color(ChordInfo *const info)
 {
     uint8_t r = info->r << 3, g = info->g << 3, b = info->b << 3;
     uint8_t difference;
-    const uint8_t brightness = 9;
+    const uint8_t brightness = 2; // was 9
     do
     {
         info->r = random(5, 32);

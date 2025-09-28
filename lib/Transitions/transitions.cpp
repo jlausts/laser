@@ -111,9 +111,6 @@ void show_hz(ChordInfo *info, const char *end="\n")
     char tmp[32];
     buf[0] = '\0';
 
-    ftoa4(tmp, info->base_hz);
-    strcat(buf, tmp);
-    strcat(buf, "\n");
     // Helper lambda to append arrays
     auto append_array = [&](float *arr, int c) {
         for (int i = 0; i < c; i++) {
@@ -350,7 +347,6 @@ void grow_shape_calc(ChordInfo *const info, const float amp_mult,
     wait_then_make(false, info);
 }
 
-// shift to the sid ea bit just before it shrinks
 void cosine_transistion(ChordInfo *const info, float time_shrink=0, float time_grow=0)
 {
     // between 1 -> 2
@@ -894,8 +890,6 @@ void tornado_twist_power4(ChordInfo *const info)
 
     clean_hz(info);
 }
-
-
 
 bool reborn(ChordInfo *const info, int time=0)
 {
@@ -1515,20 +1509,13 @@ void big_o(ChordInfo *const info)
 
 }
 
-bool remove_one(ChordInfo *const info, const int time=256)
+void remove_one(ChordInfo *const info, const int time=256)
 {
-    if (info->x_count == 2 || info->y_count == 2)
-        return false;
-
     const float count_inv = 0.5f / (float)time * TAU;
+    const float xadd = info->xamp1[info->x_count - 1] / (float)(info->x_count - 1);
+    const float yadd = info->yamp1[info->y_count - 1] / (float)(info->y_count - 1);
 
-    static float new_xamps[5], new_yamps[5];
-    for (uint8_t i = 0; i < info->x_count; i++)
-        new_xamps[i] = (1.0f / (info->x_count - 1) * info->xamp1[i] * info->x_count) - info->xamp1[i];
-    for (uint8_t i = 0; i < info->y_count; i++)
-        new_yamps[i] = (1.0f / (info->y_count - 1) * info->yamp1[i] * info->y_count) - info->yamp1[i];
-
-    static float original_xamps[5], original_yamps[5];
+    static float original_xamps[sizeof(info->xamp) / sizeof(float)], original_yamps[sizeof(info->xamp) / sizeof(float)];
     for (uint8_t i = 0; i < info->x_count; i++)
         original_xamps[i] = info->xamp1[i];
     for (uint8_t i = 0; i < info->y_count; i++)
@@ -1536,19 +1523,17 @@ bool remove_one(ChordInfo *const info, const int time=256)
 
     const uint8_t xi = info->x_count - 1;
     const uint8_t yi = info->y_count - 1;
-    const float original_xamp = info->xamp1[xi];
-    const float original_yamp = info->yamp1[yi];
 
     for (float j = 0, k = 0; j < time; j += 1, k += count_inv)
     {
         const float amp_mult = cosine(k) * 0.5f;
-        info->xamp1[xi] = original_xamp * amp_mult;
-        info->yamp1[yi] = original_yamp * amp_mult;
+        info->xamp1[xi] = original_xamps[xi] * amp_mult;
+        info->yamp1[yi] = original_yamps[yi] * amp_mult;
         
         for (uint8_t i = 0; i < xi; ++i)
-            info->xamp1[i] = original_xamps[i] + (1.0f - amp_mult) * new_xamps[i];
+            info->xamp1[i] = original_xamps[i] + (1.0f - amp_mult) * xadd;
         for (uint8_t i = 0; i < yi; ++i)
-            info->yamp1[i] = original_yamps[i] + (1.0f - amp_mult) * new_yamps[i];
+            info->yamp1[i] = original_yamps[i] + (1.0f - amp_mult) * yadd;
 
         info->rotate_angle_start = info->alpha_angle;
         info->rotate_angle_step = info->alpha_angle_step / (float)LEN;
@@ -1558,62 +1543,48 @@ bool remove_one(ChordInfo *const info, const int time=256)
 
     info->x_count--;
     info->y_count--;
-
-    return true;
 }
 
-// Bug in here
 bool add_one(ChordInfo *const info, const int time=256)
 {
-    // can't add any more hz to this one.
-    if (info->hz_using >= 6)
+    if (info->x_count == (sizeof(info->xamp) / sizeof(float)) || info->y_count == (sizeof(info->yamp) / sizeof(float)))
         return true;
 
-    static ChordInfo new_info;
-    for (uint8_t i = 0; i < info->other_hz_count; ++i)
-        new_info.other_hz[i] = info->other_hz[i];
-    new_info.other_hz_count = info->other_hz_count;
-
-    info->hz_using += 2;
-    make_chord(&new_info, false, info->base_hz, hz_using_arr[info->hz_using]);
+    ChordInfo new_info = {.x_count = (uint8_t)(info->x_count + 1), .y_count = (uint8_t)(info->y_count + 1)};
+    make_chord(&new_info, false, 0.0f, hz_count_to_num_hz(new_info.x_count, new_info.y_count));
 
     const float count_inv = 0.5f / (float)time * TAU;
+    const float xadd = new_info.xamp1[0] / (float)info->x_count;
+    const float yadd = new_info.yamp1[0] / (float)info->y_count;
 
-    static float original_xamps[5], original_yamps[5];
+    static float original_xamps[sizeof(info->xamp) / sizeof(float)], original_yamps[sizeof(info->xamp) / sizeof(float)];
     for (uint8_t i = 0; i < info->x_count; i++)
         original_xamps[i] = info->xamp1[i];
     for (uint8_t i = 0; i < info->y_count; i++)
         original_yamps[i] = info->yamp1[i];
 
-    const float new_xamp = new_info.xamp1[new_info.x_count];
-    const float new_yamp = new_info.yamp1[new_info.y_count];
-    const float xamp_mult =  new_xamp / info->x_count;
-    const float yamp_mult =  new_yamp / info->y_count;
-    info->xhz[info->x_count] = new_info.xhz[new_info.x_count];
-    info->xhz[info->y_count] = new_info.yhz[new_info.y_count];
-    const uint8_t xc = info->x_count ++;
-    const uint8_t yc = info->y_count ++;
+    const uint8_t xi = info->x_count;
+    const uint8_t yi = info->y_count;
+    info->xhz[xi] = new_info.xhz[0];
+    info->yhz[yi] = new_info.yhz[0];
+    info->x_count++;
+    info->y_count++;
 
-    show_hz(info);
-    
     for (float j = 0, k = PI; j < time; j += 1, k += count_inv)
     {
-        // float amp_sum = 0;
         const float amp_mult = cosine(k) * 0.5f;
-        for (uint8_t i = 0; i < xc; ++i)
-            info->xamp1[i] = original_xamps[i] - amp_mult * xamp_mult;
-        for (uint8_t i = 0; i < yc; ++i)
-            info->yamp1[i] = original_yamps[i] - amp_mult * yamp_mult;
-
-        info->xamp1[xc] = new_xamp * amp_mult;
-        info->yamp1[yc] = new_yamp * amp_mult;
-        // amp_sum += new_xamp * amp_mult;
-        // Serial.println(amp_sum);
+        info->xamp1[xi] = new_info.xamp1[0] * amp_mult;
+        info->yamp1[yi] = new_info.yamp1[0] * amp_mult;
+        
+        for (uint8_t i = 0; i < xi; ++i)
+            info->xamp1[i] = original_xamps[i] - amp_mult * xadd;
+        for (uint8_t i = 0; i < yi; ++i)
+            info->yamp1[i] = original_yamps[i] - amp_mult * yadd;
 
         info->rotate_angle_start = info->alpha_angle;
         info->rotate_angle_step = info->alpha_angle_step / (float)LEN;
         info->alpha_angle += info->alpha_angle_step;
-        wait_then_make(false, info);
+        wait_then_make(false, info); 
     }
 
     return false;
@@ -1855,7 +1826,7 @@ void maintain_and_change(ChordInfo *info)
 void transition(ChordInfo *info)
 {
     static uint8_t previous_num = 255;
-    const uint8_t num = random(10);
+    const uint8_t num = random(11);
 
     // dont do the same transition twice, and ensure that the color gets changed atleast every other transition
     if (num == previous_num || (previous_num > 5 && num > 5)) 
@@ -1867,10 +1838,9 @@ void transition(ChordInfo *info)
     previous_num = num;
 
     // cosine_transistion(info);
-    // tornado_twist_power4(info);
+    // add_one(info);
     // one_twist_in(info);
     // maintain_shape(200, info);
-
     // return;
 
 
@@ -1906,8 +1876,10 @@ void transition(ChordInfo *info)
         big_o(info);
         break;
     case 10:
-        if (remove_one(info))
-            transition(info);
+        remove_one(info);
+    case 11:
+        if (add_one(info))
+            return;
     default:
         break;
     }

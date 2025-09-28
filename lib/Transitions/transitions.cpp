@@ -162,6 +162,23 @@ inline void wait_for_empty_array()
     while (!(*empty));
 }
 
+void clean_hz(ChordInfo *info)
+{
+    float *const amps[2] = {info->xamp1, info->yamp1};
+    float *const hzs[2] = {info->xhz, info->yhz};
+    const uint8_t counts[2] = {info->x_count, info->y_count};
+
+    for (uint8_t j = 0; j < 2; ++j)
+        for (uint8_t i = 0; i < counts[j]; ++i)
+            if (amps[j][i] < 2)
+                hzs[j][i] = hzs[j][counts[j]-1], 
+                amps[j][i] = amps[j][counts[j]-1];
+                
+    info->x_count--;
+    info->y_count--;
+}
+
+
 
 
 void transitioner(volatile Data *const data_array, const ChordInfo *const info)
@@ -641,6 +658,8 @@ void shaker(ChordInfo *const info)
 
     for (; i < 900; ++i, info->alpha_angle += info->alpha_angle_step)
         shake_calc(info, i, center, mult*PI);
+
+    clean_hz(info);
 }
 
 void tornado_twist_power2(ChordInfo *const info)
@@ -872,71 +891,11 @@ void tornado_twist_power4(ChordInfo *const info)
     info->y_offset_step = 0;
     info->yamp_step = 0;
     info->xamp_step = 0;
+
+    clean_hz(info);
 }
 
-void tornado_twist_power4OLD(ChordInfo *const info)
-{
-    const float start_grow_speed = 0.005f;
-    const float end_shrink_speed = 0.005f;
-    const float angle_step = (float)(rand() & 255) / 63750.0f + 0.003f; // .003->.007
-    const float twist_count = (float)(rand() & 255) / 510.0f + 2.2f; // 2.2->2.7    2.7 is the max value until for some reason the shape turns into a point. during the transition.
 
-    float solved_x = cbrtf(info->alpha_angle_step / angle_step / 4.0f);
-    float y_adder = solved_x * solved_x * solved_x * solved_x;
-    const float stop_slope = 4.0f * twist_count * twist_count * twist_count *angle_step;
-    float deg2 = 0;
-
-    int count = 0;
-    for (float deg = 0, i = 0, j = angle_step;
-        deg2-deg < stop_slope;
-        i += angle_step, j += angle_step)
-    {
-        float ii = (i + solved_x);
-        float jj = (j + solved_x);
-        deg = ii * ii * ii * ii + info->alpha_angle - y_adder;
-        deg2 = jj * jj * jj * jj + info->alpha_angle - y_adder;
-        info->rotate_angle_start = deg;
-        info->rotate_angle_step = (deg2 - deg) / (float)LEN;
-        count++;
-        wait_then_make(false, info);
-    }
-    info->rotate_angle_start = deg2; 
-
-    // random angle -.3 -> +.3
-    const float total_angle = ((float)(rand() & 1023) / (1023/RANDOM_ROTATION_ANGLE)) * TAU;
-    const float total_steps = (1.0f / start_grow_speed) + (1.0f / end_shrink_speed) + stable_time - 2.0f;
-    info->alpha_angle_step = total_angle / total_steps;
-    info->alpha_angle = RANDOM_ROTATION_ANGLE * 7 * TAU;
-    float end_x = twist_count - cbrtf(info->alpha_angle_step / angle_step / 4.0f);
-    wait_then_make(true, info, false);
-    for (float deg = 0, deg2 = 0, i = 0, j = angle_step;
-        i < end_x;
-        i += angle_step, j += angle_step)
-    {
-        float ii = (twist_count - i);
-        float jj = (twist_count - j);
-        deg = -ii * ii * ii * ii + info->alpha_angle + TAU * 5;
-        deg2 = -jj * jj * jj * jj + info->alpha_angle + TAU * 5;
-        info->rotate_angle_start = deg;
-        info->rotate_angle_step = (deg2 - deg) / (float)LEN;
-        wait_then_make(false, info);
-        count++;
-    }
-
-    info->alpha_angle = info->rotate_angle_start + info->rotate_angle_step;
-    info->x_offset_start += info->x_offset_step;
-    info->y_offset_start += info->y_offset_step;
-    info->xamp_start += info->yamp_step;
-    info->yamp_start += info->xamp_step;
-
-    info->x_offset_step = 0;
-    info->y_offset_step = 0;
-    info->yamp_step = 0;
-    info->xamp_step = 0;
-    // println(count, twist_time, abs(count - twist_time), "");
-
-    // println(angle_step, twist_count, count, "");//1305 599
-}
 
 bool reborn(ChordInfo *const info, int time=0)
 {
@@ -1898,7 +1857,7 @@ void transition(ChordInfo *info)
     static uint8_t previous_num = 255;
     const uint8_t num = random(10);
 
-    // dont' do the same transition twice, and ensure that the color gets changed atleast every other transition
+    // dont do the same transition twice, and ensure that the color gets changed atleast every other transition
     if (num == previous_num || (previous_num > 5 && num > 5)) 
     {
         transition(info);
@@ -1911,6 +1870,7 @@ void transition(ChordInfo *info)
     // tornado_twist_power4(info);
     // one_twist_in(info);
     // maintain_shape(200, info);
+
     // return;
 
 

@@ -180,33 +180,25 @@ void transitioner(volatile Data *const data_array, const ChordInfo *const info)
         {
         case 1 << 4 | 1: TRANSITION_FOR_LOOP { SET_COLOR; SET_X1; SET_Y1; ROTATE_CLAMP; } break;
         case 1 << 4 | 2: TRANSITION_FOR_LOOP { SET_COLOR; SET_X1; SET_Y2; ROTATE_CLAMP; } break;
-        case 1 << 4 | 3: TRANSITION_FOR_LOOP { SET_COLOR; SET_X1; SET_Y3; ROTATE_CLAMP; } break;
-        case 1 << 4 | 4: TRANSITION_FOR_LOOP { SET_COLOR; SET_X1; SET_Y4; ROTATE_CLAMP; } break;
-        case 1 << 4 | 5: TRANSITION_FOR_LOOP { SET_COLOR; SET_X1; SET_Y5; ROTATE_CLAMP; } break;
 
         case 2 << 4 | 1: TRANSITION_FOR_LOOP { SET_COLOR; SET_X2; SET_Y1; ROTATE_CLAMP; } break;
         case 2 << 4 | 2: TRANSITION_FOR_LOOP { SET_COLOR; SET_X2; SET_Y2; ROTATE_CLAMP; } break;
         case 2 << 4 | 3: TRANSITION_FOR_LOOP { SET_COLOR; SET_X2; SET_Y3; ROTATE_CLAMP; } break;
-        case 2 << 4 | 4: TRANSITION_FOR_LOOP { SET_COLOR; SET_X2; SET_Y4; ROTATE_CLAMP; } break;
-        case 2 << 4 | 5: TRANSITION_FOR_LOOP { SET_COLOR; SET_X2; SET_Y5; ROTATE_CLAMP; } break;
 
-        case 3 << 4 | 1: TRANSITION_FOR_LOOP { SET_COLOR; SET_X3; SET_Y1; ROTATE_CLAMP; } break;
         case 3 << 4 | 2: TRANSITION_FOR_LOOP { SET_COLOR; SET_X3; SET_Y2; ROTATE_CLAMP; } break;
         case 3 << 4 | 3: TRANSITION_FOR_LOOP { SET_COLOR; SET_X3; SET_Y3; ROTATE_CLAMP; } break;
         case 3 << 4 | 4: TRANSITION_FOR_LOOP { SET_COLOR; SET_X3; SET_Y4; ROTATE_CLAMP; } break;
-        case 3 << 4 | 5: TRANSITION_FOR_LOOP { SET_COLOR; SET_X3; SET_Y5; ROTATE_CLAMP; } break;
 
-        case 4 << 4 | 1: TRANSITION_FOR_LOOP { SET_COLOR; SET_X4; SET_Y1; ROTATE_CLAMP; } break;
-        case 4 << 4 | 2: TRANSITION_FOR_LOOP { SET_COLOR; SET_X4; SET_Y2; ROTATE_CLAMP; } break;
         case 4 << 4 | 3: TRANSITION_FOR_LOOP { SET_COLOR; SET_X4; SET_Y3; ROTATE_CLAMP; } break;
         case 4 << 4 | 4: TRANSITION_FOR_LOOP { SET_COLOR; SET_X4; SET_Y4; ROTATE_CLAMP; } break;
         case 4 << 4 | 5: TRANSITION_FOR_LOOP { SET_COLOR; SET_X4; SET_Y5; ROTATE_CLAMP; } break;
 
-        case 5 << 4 | 1: TRANSITION_FOR_LOOP { SET_COLOR; SET_X5; SET_Y1; ROTATE_CLAMP; } break;
-        case 5 << 4 | 2: TRANSITION_FOR_LOOP { SET_COLOR; SET_X5; SET_Y2; ROTATE_CLAMP; } break;
-        case 5 << 4 | 3: TRANSITION_FOR_LOOP { SET_COLOR; SET_X5; SET_Y3; ROTATE_CLAMP; } break;
         case 5 << 4 | 4: TRANSITION_FOR_LOOP { SET_COLOR; SET_X5; SET_Y4; ROTATE_CLAMP; } break;
         case 5 << 4 | 5: TRANSITION_FOR_LOOP { SET_COLOR; SET_X5; SET_Y5; ROTATE_CLAMP; } break;
+        case 5 << 4 | 6: TRANSITION_FOR_LOOP { SET_COLOR; SET_X5; SET_Y6; ROTATE_CLAMP; } break;
+
+        case 6 << 4 | 5: TRANSITION_FOR_LOOP { SET_COLOR; SET_X6; SET_Y5; ROTATE_CLAMP; } break;
+        case 6 << 4 | 6: TRANSITION_FOR_LOOP { SET_COLOR; SET_X6; SET_Y6; ROTATE_CLAMP; } break;
 
         default: break;
         }
@@ -219,45 +211,40 @@ void transitioner(volatile Data *const data_array, const ChordInfo *const info)
         {
         case 1 << 4 | 1: TRANSITION_FOR_LOOP { SET_COLOR; SET_X1; SET_Y1; OFFSET; ROTATE_CLAMP; } break;
         case 1 << 4 | 2: TRANSITION_FOR_LOOP { SET_COLOR; SET_X1; SET_Y2; OFFSET; ROTATE_CLAMP; } break;
-        case 1 << 4 | 3: TRANSITION_FOR_LOOP { SET_COLOR; SET_X1; SET_Y3; OFFSET; ROTATE_CLAMP; } break;
-        case 1 << 4 | 4: TRANSITION_FOR_LOOP { SET_COLOR; SET_X1; SET_Y4; OFFSET; ROTATE_CLAMP; } break;
-        case 1 << 4 | 5: TRANSITION_FOR_LOOP { SET_COLOR; SET_X1; SET_Y5; OFFSET; ROTATE_CLAMP; } break;
 
         case 2 << 4 | 1: TRANSITION_FOR_LOOP { SET_COLOR; SET_X2; SET_Y1; OFFSET; ROTATE_CLAMP; } break;
         case 2 << 4 | 2: TRANSITION_FOR_LOOP { SET_COLOR; SET_X2; SET_Y2; OFFSET; ROTATE_CLAMP; } break;
         case 2 << 4 | 3: TRANSITION_FOR_LOOP { SET_COLOR; SET_X2; SET_Y3; OFFSET; ROTATE_CLAMP; } break;
-        case 2 << 4 | 4: TRANSITION_FOR_LOOP { SET_COLOR; SET_X2; SET_Y4; OFFSET; ROTATE_CLAMP; } break;
-        case 2 << 4 | 5: TRANSITION_FOR_LOOP { SET_COLOR; SET_X2; SET_Y5; OFFSET; ROTATE_CLAMP; } break;
 
-        case 3 << 4 | 1: TRANSITION_FOR_LOOP { SET_COLOR; SET_X3; SET_Y1; OFFSET; ROTATE_CLAMP; } break;
         case 3 << 4 | 2: TRANSITION_FOR_LOOP { SET_COLOR; SET_X3; SET_Y2; OFFSET; ROTATE_CLAMP; } break;
         case 3 << 4 | 3: TRANSITION_FOR_LOOP { SET_COLOR; SET_X3; SET_Y3; OFFSET; ROTATE_CLAMP; } break;
         case 3 << 4 | 4: TRANSITION_FOR_LOOP { SET_COLOR; SET_X3; SET_Y4; OFFSET; ROTATE_CLAMP; } break;
-        case 3 << 4 | 5: TRANSITION_FOR_LOOP { SET_COLOR; SET_X3; SET_Y5; OFFSET; ROTATE_CLAMP; } break;
 
-        case 4 << 4 | 1: TRANSITION_FOR_LOOP { SET_COLOR; SET_X4; SET_Y1; OFFSET; ROTATE_CLAMP; } break;
-        case 4 << 4 | 2: TRANSITION_FOR_LOOP { SET_COLOR; SET_X4; SET_Y2; OFFSET; ROTATE_CLAMP; } break;
         case 4 << 4 | 3: TRANSITION_FOR_LOOP { SET_COLOR; SET_X4; SET_Y3; OFFSET; ROTATE_CLAMP; } break;
         case 4 << 4 | 4: TRANSITION_FOR_LOOP { SET_COLOR; SET_X4; SET_Y4; OFFSET; ROTATE_CLAMP; } break;
         case 4 << 4 | 5: TRANSITION_FOR_LOOP { SET_COLOR; SET_X4; SET_Y5; OFFSET; ROTATE_CLAMP; } break;
 
-        case 5 << 4 | 1: TRANSITION_FOR_LOOP { SET_COLOR; SET_X5; SET_Y1; OFFSET; ROTATE_CLAMP; } break;
-        case 5 << 4 | 2: TRANSITION_FOR_LOOP { SET_COLOR; SET_X5; SET_Y2; OFFSET; ROTATE_CLAMP; } break;
-        case 5 << 4 | 3: TRANSITION_FOR_LOOP { SET_COLOR; SET_X5; SET_Y3; OFFSET; ROTATE_CLAMP; } break;
         case 5 << 4 | 4: TRANSITION_FOR_LOOP { SET_COLOR; SET_X5; SET_Y4; OFFSET; ROTATE_CLAMP; } break;
         case 5 << 4 | 5: TRANSITION_FOR_LOOP { SET_COLOR; SET_X5; SET_Y5; OFFSET; ROTATE_CLAMP; } break;
+        case 5 << 4 | 6: TRANSITION_FOR_LOOP { SET_COLOR; SET_X5; SET_Y6; OFFSET; ROTATE_CLAMP; } break;
+
+        case 6 << 4 | 5: TRANSITION_FOR_LOOP { SET_COLOR; SET_X6; SET_Y5; OFFSET; ROTATE_CLAMP; } break;
+        case 6 << 4 | 6: TRANSITION_FOR_LOOP { SET_COLOR; SET_X6; SET_Y6; OFFSET; ROTATE_CLAMP; } break;
 
         default: break;
         }
     }
 }
 
-void make_shape(const bool new_shape, ChordInfo *info, bool new_color = true)
+void make_shape(const bool new_shape, ChordInfo *info, bool new_color = true, const bool same_count=false)
 {
     if (new_shape)
     {
         info->t = 0;
-        make_chord(info);
+        if (same_count)
+            make_chord(info, false, 0.0f, hz_count_to_num_hz(info->x_count, info->y_count));
+        else
+            make_chord(info);
         if (new_color)
             random_color(info);
     }
@@ -272,12 +259,12 @@ void make_shape(const bool new_shape, ChordInfo *info, bool new_color = true)
     info->t += 255;
 }
 
-void wait_then_make(const bool new_shape, ChordInfo *info, bool new_color=true)
+void wait_then_make(const bool new_shape, ChordInfo *info, bool new_color=true, const bool same_count=false)
 {
     pin10of;
     wait_for_empty_array();
     pin10on;
-    make_shape(new_shape, info, new_color);
+    make_shape(new_shape, info, new_color, same_count);
 }
 
 void grow_shape(ChordInfo *const info, const float amp_mult, const float start_grow_speed, const float max_amp, const float offset_add)
@@ -558,62 +545,102 @@ void cosine_twister(ChordInfo *const info)
     info->xamp_step = 0;
 }
 
-// would be nice to make the sudden transition from one shape to another when shaking to be less sudden.
-void shaker(ChordInfo *const info)
+void shake_calc(ChordInfo *const info, const int i, const float center, 
+    const float mult = 25*PI, const float shake_mult = 40)
 {
-    const float mult = 25 * PI;
-    int i = 100;
-    const float center = info->x_offset_start;
-    const float shake_mult = 40;
-    for (; i < 500; ++i, info->alpha_angle += info->alpha_angle_step)
-    {
-        info->rotate_angle_start = info->alpha_angle;
-        info->rotate_angle_step = info->alpha_angle_step / (float)LEN;
-
-        float ex = e_to_x(i);
-        float ex_plus1 = 1 + ex;
-        float der1 = (cosine(mult / ex_plus1) - 1) * mult * ex / (ex_plus1 * ex_plus1) * shake_mult;
-        info->x_offset_start = der1 + center; 
-
-        ex = e_to_x(i+1);
-        ex_plus1 = 1 + ex;
-        float der2 = (cosine(mult / ex_plus1) - 1) * mult * ex / ex_plus1 / ex_plus1 * shake_mult;
-
-        info->x_offset_step = (der2 - der1) / LEN;
-        wait_then_make(false, info);
-    }
-
     info->rotate_angle_start = info->alpha_angle;
     info->rotate_angle_step = info->alpha_angle_step / (float)LEN;
 
-    float ex = e_to_x(i++);
+    float ex = e_to_x(i);
     float ex_plus1 = 1 + ex;
     float der1 = (cosine(mult / ex_plus1) - 1) * mult * ex / (ex_plus1 * ex_plus1) * shake_mult;
     info->x_offset_start = der1 + center; 
 
-    ex = e_to_x(i);
+    ex = e_to_x(i+1);
     ex_plus1 = 1 + ex;
     float der2 = (cosine(mult / ex_plus1) - 1) * mult * ex / ex_plus1 / ex_plus1 * shake_mult;
-    info->x_offset_step = (der2 - der1) / LEN;
-    wait_then_make(true, info, false);
+    info->x_offset_step = (der2 - der1) / LEN;  
+    wait_then_make(false, info);
+}
+
+void shaker(ChordInfo *const info)
+{
+    if (info->x_count == 6 || info->y_count == 6)
+        return;
+
+    int mult = (rand()&7) + 19; // 19 -> 26
+
+    int i = 100;
+    const float center = info->x_offset_start;
+    const int first_part = 390;
+    const int total_transition_count = 610;
+
+
+    ChordInfo new_info = {.x_count = info->x_count, .y_count = info->y_count};
+    make_chord(&new_info, false, 0.0f, hz_count_to_num_hz(new_info.x_count, new_info.y_count));
+
+    for (; i < first_part; ++i, info->alpha_angle += info->alpha_angle_step)
+        shake_calc(info, i, center, mult*PI);
+    
+    int count_per_xhz = (int)((total_transition_count - first_part) / (float)info->x_count + 0.5f);
+    int count_per_yhz = (int)((total_transition_count - first_part) / (float)info->y_count + 0.5f);
+    const float mult_add_x = PI / (float)count_per_xhz;
+    const float mult_add_y = PI / (float)count_per_yhz;
+    float amp_mult_shrink_x = TAU;
+    float amp_mult_shrink_y = TAU;
+
+    info->xhz[info->x_count] = new_info.xhz[0];
+    info->yhz[info->y_count] = new_info.yhz[0];
+    float original_xamp = info->xamp1[0];
+    float original_yamp = info->yamp1[0];
+    const uint8_t x_count = info->x_count++;
+    const uint8_t y_count = info->y_count++;
+    info->xamp1[x_count] = 0;
+    info->yamp1[y_count] = 0;
+    int xc = 0, yc = 0, xhz = 0, yhz = 0;
+
+
+    for (; i < total_transition_count; 
+        ++i, info->alpha_angle += info->alpha_angle_step, ++xc, ++yc, 
+        amp_mult_shrink_x -= mult_add_x, amp_mult_shrink_y -= mult_add_y)
+    {
+        float mul = cosine(amp_mult_shrink_x) * 0.5f;
+        info->xamp1[xhz] = original_xamp * mul;
+        info->xamp1[x_count] = original_xamp * (1-mul);
+        
+        mul = cosine(amp_mult_shrink_y) * 0.5f;
+        info->yamp1[yhz] = original_yamp * mul;
+        info->yamp1[y_count] = original_yamp * (1-mul);
+
+        if (xc == count_per_xhz)
+        {
+            info->xamp1[x_count] = 0;
+            info->xamp1[xhz] = original_xamp;
+            xc = 0;
+            amp_mult_shrink_x = TAU;
+            info->xhz[xhz] = new_info.xhz[xhz];
+            original_xamp = info->xamp1[++xhz];
+            info->xhz[x_count] = new_info.xhz[xhz];
+        }  
+
+        if (yc == count_per_yhz)
+        {
+            info->yamp1[y_count] = 0;
+            info->yamp1[yhz] = original_yamp;
+            yc = 0;
+            amp_mult_shrink_y = TAU;
+            info->yhz[yhz] = new_info.yhz[yhz];
+            original_yamp = info->yamp1[++yhz];
+            info->yhz[y_count] = new_info.yhz[yhz];
+        }
+                
+        shake_calc(info, i, center, mult*PI);
+    }
+
+    shake_calc(info, i, center, mult*PI);
 
     for (; i < 900; ++i, info->alpha_angle += info->alpha_angle_step)
-    {
-        info->rotate_angle_start = info->alpha_angle;
-        info->rotate_angle_step = info->alpha_angle_step / (float)LEN;
-
-        float ex = e_to_x(i);
-        float ex_plus1 = 1 + ex;
-        float der1 = (cosine(mult / ex_plus1) - 1) * mult * ex / (ex_plus1 * ex_plus1) * shake_mult;
-        info->x_offset_start = der1 + center; 
-
-        ex = e_to_x(i+1);
-        ex_plus1 = 1 + ex;
-        float der2 = (cosine(mult / ex_plus1) - 1) * mult * ex / ex_plus1 / ex_plus1 * shake_mult;
-
-        info->x_offset_step = (der2 - der1) / LEN;
-        wait_then_make(false, info);
-    }
+        shake_calc(info, i, center, mult*PI);
 }
 
 void tornado_twist_power2(ChordInfo *const info)
@@ -677,9 +704,177 @@ void tornado_twist_power2(ChordInfo *const info)
     info->xamp_step = 0;
 }
 
-// would be nice to have the shape gracefully turn into its next one turing the twist instead of suddenly changing.
-// also do CW and CCW.
 void tornado_twist_power4(ChordInfo *const info)
+{
+    if (info->x_count == 6 || info->y_count == 6)
+        return;
+
+    const float start_grow_speed = 0.005f;
+    const float end_shrink_speed = 0.005f;
+    const float angle_step = (float)(rand() & 255) / 63750.0f + 0.003f; // .003->.007
+    const float twist_count = (float)(rand() & 255) / 510.0f + 2.2f; // 2.2->2.7    2.7 is the max value until for some reason the shape turns into a point. during the transition.
+
+    float solved_x = cbrtf(info->alpha_angle_step / angle_step / 4.0f);
+    float y_adder = solved_x * solved_x * solved_x * solved_x;
+    const float stop_slope = 4.0f * twist_count * twist_count * twist_count *angle_step;
+    float deg2 = 0;
+
+    // approximate number of frames:
+    float twist_time = -146.8796 -141950.2655*angle_step +964.1840*twist_count +25247540.5481*angle_step*angle_step -110667.1081*angle_step* twist_count +7.8001*twist_count*twist_count;
+
+    int start_changing = twist_time * 0.25f;
+    int stop_changing = twist_time * 0.75f;
+
+    ChordInfo new_info = {.x_count = info->x_count, .y_count = info->y_count};
+    make_chord(&new_info, false, 0.0f, hz_count_to_num_hz(new_info.x_count, new_info.y_count));
+    
+    int count_per_xhz = (int)(twist_time / (float)info->x_count * 0.5f + 0.5f);
+    int count_per_yhz = (int)(twist_time / (float)info->y_count * 0.5f + 0.5f);
+    const float mult_add_x = PI / (float)count_per_xhz;
+    const float mult_add_y = PI / (float)count_per_yhz;
+    float amp_mult_shrink_x = TAU;
+    float amp_mult_shrink_y = TAU;
+
+    info->xhz[info->x_count] = new_info.xhz[0];
+    info->yhz[info->y_count] = new_info.yhz[0];
+    float original_xamp = info->xamp1[0];
+    float original_yamp = info->yamp1[0];
+    const uint8_t x_count = info->x_count++;
+    const uint8_t y_count = info->y_count++;
+    info->xamp1[x_count] = 0;
+    info->yamp1[y_count] = 0;
+    int xc = 0, yc = 0, xhz = 0, yhz = 0, counter = 0;
+
+    int count = 0;
+    for (float deg = 0, i = 0, j = angle_step;
+        deg2-deg < stop_slope;
+        i += angle_step, j += angle_step, ++counter)
+    {
+        float ii = (i + solved_x);
+        float jj = (j + solved_x);
+        deg = ii * ii * ii * ii + info->alpha_angle - y_adder;
+        deg2 = jj * jj * jj * jj + info->alpha_angle - y_adder;
+        info->rotate_angle_start = deg;
+        info->rotate_angle_step = (deg2 - deg) / (float)LEN;
+        count++;
+
+        if (counter > start_changing && counter < stop_changing)
+        {
+            float mul = cosine(amp_mult_shrink_x) * 0.5f;
+            info->xamp1[xhz] = original_xamp * mul;
+            info->xamp1[x_count] = original_xamp * (1-mul);
+            
+            mul = cosine(amp_mult_shrink_y) * 0.5f;
+            info->yamp1[yhz] = original_yamp * mul;
+            info->yamp1[y_count] = original_yamp * (1-mul);
+
+            if (xc == count_per_xhz)
+            {
+                info->xamp1[x_count] = 0;
+                info->xamp1[xhz] = original_xamp;
+                xc = 0;
+                amp_mult_shrink_x = TAU;
+                info->xhz[xhz] = new_info.xhz[xhz];
+                original_xamp = info->xamp1[++xhz];
+                info->xhz[x_count] = new_info.xhz[xhz];
+            }  
+
+            if (yc == count_per_yhz)
+            {
+                info->yamp1[y_count] = 0;
+                info->yamp1[yhz] = original_yamp;
+                yc = 0;
+                amp_mult_shrink_y = TAU;
+                info->yhz[yhz] = new_info.yhz[yhz];
+                original_yamp = info->yamp1[++yhz];
+                info->yhz[y_count] = new_info.yhz[yhz];
+            }
+            
+            ++xc;
+            ++yc;
+            amp_mult_shrink_x -= mult_add_x;
+            amp_mult_shrink_y -= mult_add_y;
+        }  
+
+        wait_then_make(false, info);
+    }
+    info->rotate_angle_start = deg2; 
+
+    // random angle -.3 -> +.3
+    const float total_angle = ((float)(rand() & 1023) / (1023/RANDOM_ROTATION_ANGLE)) * TAU;
+    const float total_steps = (1.0f / start_grow_speed) + (1.0f / end_shrink_speed) + stable_time - 2.0f;
+    info->alpha_angle_step = total_angle / total_steps;
+    info->alpha_angle = RANDOM_ROTATION_ANGLE * 7 * TAU;
+    float end_x = twist_count - cbrtf(info->alpha_angle_step / angle_step / 4.0f);
+    const float adder = fabsf(-twist_count * twist_count * twist_count * twist_count + info->alpha_angle) + info->rotate_angle_start;
+
+    wait_then_make(false, info);
+    for (float deg = 0, deg2 = 0, i = 0, j = angle_step;
+        i < end_x;
+        i += angle_step, j += angle_step, ++counter)
+    {
+        float ii = (twist_count - i);
+        float jj = (twist_count - j);
+        deg = -ii * ii * ii * ii + info->alpha_angle + adder;
+        deg2 = -jj * jj * jj * jj + info->alpha_angle + adder;
+        info->rotate_angle_start = deg;
+        info->rotate_angle_step = (deg2 - deg) / (float)LEN;
+
+        if (counter > start_changing && counter < stop_changing)
+        {
+            float mul = cosine(amp_mult_shrink_x) * 0.5f;
+            info->xamp1[xhz] = original_xamp * mul;
+            info->xamp1[x_count] = original_xamp * (1-mul);
+            
+            mul = cosine(amp_mult_shrink_y) * 0.5f;
+            info->yamp1[yhz] = original_yamp * mul;
+            info->yamp1[y_count] = original_yamp * (1-mul);
+
+            if (xc == count_per_xhz)
+            {
+                info->xamp1[x_count] = 0;
+                info->xamp1[xhz] = original_xamp;
+                xc = 0;
+                amp_mult_shrink_x = TAU;
+                info->xhz[xhz] = new_info.xhz[xhz];
+                original_xamp = info->xamp1[++xhz];
+                info->xhz[x_count] = new_info.xhz[xhz];
+            }  
+
+            if (yc == count_per_yhz)
+            {
+                info->yamp1[y_count] = 0;
+                info->yamp1[yhz] = original_yamp;
+                yc = 0;
+                amp_mult_shrink_y = TAU;
+                info->yhz[yhz] = new_info.yhz[yhz];
+                original_yamp = info->yamp1[++yhz];
+                info->yhz[y_count] = new_info.yhz[yhz];
+            }
+
+            ++xc;
+            ++yc;
+            amp_mult_shrink_x -= mult_add_x;
+            amp_mult_shrink_y -= mult_add_y;
+        }  
+
+        wait_then_make(false, info);
+        count++;
+    }
+
+    info->alpha_angle = info->rotate_angle_start + info->rotate_angle_step;
+    info->x_offset_start += info->x_offset_step;
+    info->y_offset_start += info->y_offset_step;
+    info->xamp_start += info->yamp_step;
+    info->yamp_start += info->xamp_step;
+
+    info->x_offset_step = 0;
+    info->y_offset_step = 0;
+    info->yamp_step = 0;
+    info->xamp_step = 0;
+}
+
+void tornado_twist_power4OLD(ChordInfo *const info)
 {
     const float start_grow_speed = 0.005f;
     const float end_shrink_speed = 0.005f;
@@ -690,8 +885,8 @@ void tornado_twist_power4(ChordInfo *const info)
     float y_adder = solved_x * solved_x * solved_x * solved_x;
     const float stop_slope = 4.0f * twist_count * twist_count * twist_count *angle_step;
     float deg2 = 0;
-    auto start = micros();
 
+    int count = 0;
     for (float deg = 0, i = 0, j = angle_step;
         deg2-deg < stop_slope;
         i += angle_step, j += angle_step)
@@ -702,7 +897,7 @@ void tornado_twist_power4(ChordInfo *const info)
         deg2 = jj * jj * jj * jj + info->alpha_angle - y_adder;
         info->rotate_angle_start = deg;
         info->rotate_angle_step = (deg2 - deg) / (float)LEN;
-
+        count++;
         wait_then_make(false, info);
     }
     info->rotate_angle_start = deg2; 
@@ -725,6 +920,7 @@ void tornado_twist_power4(ChordInfo *const info)
         info->rotate_angle_start = deg;
         info->rotate_angle_step = (deg2 - deg) / (float)LEN;
         wait_then_make(false, info);
+        count++;
     }
 
     info->alpha_angle = info->rotate_angle_start + info->rotate_angle_step;
@@ -737,6 +933,9 @@ void tornado_twist_power4(ChordInfo *const info)
     info->y_offset_step = 0;
     info->yamp_step = 0;
     info->xamp_step = 0;
+    // println(count, twist_time, abs(count - twist_time), "");
+
+    // println(angle_step, twist_count, count, "");//1305 599
 }
 
 bool reborn(ChordInfo *const info, int time=0)
@@ -1709,7 +1908,7 @@ void transition(ChordInfo *info)
     previous_num = num;
 
     // cosine_transistion(info);
-    // one_twist_in_out(info);
+    // tornado_twist_power4(info);
     // one_twist_in(info);
     // maintain_shape(200, info);
     // return;

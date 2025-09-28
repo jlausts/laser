@@ -356,7 +356,7 @@ void TimerHandler()
         return;
     
     // write to the ports
-    write_color(info);
+    write_color(&data[array_reading][0]);
     write_laser(info);
 
     // the current array address is nolonger valid

@@ -10,13 +10,24 @@
     xamp+=info->xamp_step, yamp+=info->yamp_step, \
     x_offset+=info->x_offset_step, y_offset+=info->y_offset_step)
 
+    
+#define TRANSITION_FOR_LOOP_ORBIT for (int j = 0, k = info->t; j < LEN; \
+    ++j, ++k, angle+=info->rotate_angle_step, \
+    xamp+=info->xamp_step, yamp+=info->yamp_step, \
+    x_offset+=info->x_offset_step, y_offset+=info->y_offset_step, \
+    x2_offset+=info->x2_offset_step, y2_offset+=info->y2_offset_step, \
+    angle2+=info->rotate_angle_step2)
+
 extern volatile Data data[2][256];
 static constexpr double TAU = 6.283185307179586;
 uint8_t hz_using_arr[8] = {3, 6, 9, 11, 12, 13, 14, 15};
 
 #define ROTATE_CLAMP rotate_point_and_clamp2(&data_array[j], angle, info->center_x, info->center_y);
+#define ROTATE rotate_point(&data_array[j], angle, info->center_x, info->center_y);
+#define ROTATE_CLAMP2 rotate_point_and_clamp2(&data_array[j], angle2, info->center_x, info->center_y);
 
 #define OFFSET data_array[j].laser_x += x_offset; data_array[j].laser_y += y_offset;
+#define OFFSET2 data_array[j].laser_x += x2_offset; data_array[j].laser_y += y2_offset;
 
 #define RANDOM_ROTATION_ANGLE 0.5f
 
@@ -152,6 +163,16 @@ void rotate_point_and_clamp2(volatile Data *const data_array, const float angle,
     if (data_array->laser_y > MAX_POSITION) data_array->laser_y = MAX_POSITION;
 }
 
+void rotate_point(volatile Data *const data_array, const float angle, const float cx, const float cy)
+{
+    const float dx = (float)(data_array->laser_x) - cx;
+    const float dy = (float)(data_array->laser_y) - cy;
+    const float sin_ = sine(angle) - 1.0f;
+    const float cos_ = cosine(angle) - 1.0f;
+    data_array->laser_x = (uint16_t)((cx + dx * cos_ - dy * sin_) + 0.5f);
+    data_array->laser_y = (uint16_t)((cy + dx * sin_ + dy * cos_) + 0.5f);
+}
+
 inline void wait_for_empty_array()
 {
     // wait for the interrupts to use up the data.
@@ -181,10 +202,17 @@ void clean_hz(ChordInfo *info)
 void transitioner(volatile Data *const data_array, const ChordInfo *const info)
 {
     float angle = info->rotate_angle_start;
+    float angle2 = info->rotate_angle_start2;
     float xamp = info->xamp_start;
     float yamp = info->yamp_start;
     float x_offset = info->x_offset_start;
     float y_offset = info->y_offset_start;
+    float x2_offset = info->x2_offset_start;
+    float y2_offset = info->y2_offset_start;
+    data_array[0].r  = info->r; 
+    data_array[0].g  = info->g; 
+    data_array[0].b  = info->b;
+
     // println(angle, (double)info->rotate_angle_step*1e6, xamp*1e3, info->xamp_step * 1e6, "\n");
 
     // no offset
@@ -213,6 +241,36 @@ void transitioner(volatile Data *const data_array, const ChordInfo *const info)
 
         case 6 << 4 | 5: TRANSITION_FOR_LOOP { SET_COLOR; SET_X6; SET_Y5; ROTATE_CLAMP; } break;
         case 6 << 4 | 6: TRANSITION_FOR_LOOP { SET_COLOR; SET_X6; SET_Y6; ROTATE_CLAMP; } break;
+
+        default: break;
+        }
+    }
+
+    else if (info->orbit)
+    {
+        switch (info->x_count << 4 | info->y_count)
+        {
+        case 1 << 4 | 1: TRANSITION_FOR_LOOP_ORBIT { SET_COLOR; SET_X1; SET_Y1; OFFSET; ROTATE; OFFSET2; ROTATE_CLAMP2 } break;
+        case 1 << 4 | 2: TRANSITION_FOR_LOOP_ORBIT { SET_COLOR; SET_X1; SET_Y2; OFFSET; ROTATE; OFFSET2; ROTATE_CLAMP2 } break;
+
+        case 2 << 4 | 1: TRANSITION_FOR_LOOP_ORBIT { SET_COLOR; SET_X2; SET_Y1; OFFSET; ROTATE; OFFSET2; ROTATE_CLAMP2 } break;
+        case 2 << 4 | 2: TRANSITION_FOR_LOOP_ORBIT { SET_COLOR; SET_X2; SET_Y2; OFFSET; ROTATE; OFFSET2; ROTATE_CLAMP2 } break;
+        case 2 << 4 | 3: TRANSITION_FOR_LOOP_ORBIT { SET_COLOR; SET_X2; SET_Y3; OFFSET; ROTATE; OFFSET2; ROTATE_CLAMP2 } break;
+
+        case 3 << 4 | 2: TRANSITION_FOR_LOOP_ORBIT { SET_COLOR; SET_X3; SET_Y2; OFFSET; ROTATE; OFFSET2; ROTATE_CLAMP2 } break;
+        case 3 << 4 | 3: TRANSITION_FOR_LOOP_ORBIT { SET_COLOR; SET_X3; SET_Y3; OFFSET; ROTATE; OFFSET2; ROTATE_CLAMP2 } break;
+        case 3 << 4 | 4: TRANSITION_FOR_LOOP_ORBIT { SET_COLOR; SET_X3; SET_Y4; OFFSET; ROTATE; OFFSET2; ROTATE_CLAMP2 } break;
+
+        case 4 << 4 | 3: TRANSITION_FOR_LOOP_ORBIT { SET_COLOR; SET_X4; SET_Y3; OFFSET; ROTATE; OFFSET2; ROTATE_CLAMP2 } break;
+        case 4 << 4 | 4: TRANSITION_FOR_LOOP_ORBIT { SET_COLOR; SET_X4; SET_Y4; OFFSET; ROTATE; OFFSET2; ROTATE_CLAMP2 } break;
+        case 4 << 4 | 5: TRANSITION_FOR_LOOP_ORBIT { SET_COLOR; SET_X4; SET_Y5; OFFSET; ROTATE; OFFSET2; ROTATE_CLAMP2 } break;
+
+        case 5 << 4 | 4: TRANSITION_FOR_LOOP_ORBIT { SET_COLOR; SET_X5; SET_Y4; OFFSET; ROTATE; OFFSET2; ROTATE_CLAMP2 } break;
+        case 5 << 4 | 5: TRANSITION_FOR_LOOP_ORBIT { SET_COLOR; SET_X5; SET_Y5; OFFSET; ROTATE; OFFSET2; ROTATE_CLAMP2 } break;
+        case 5 << 4 | 6: TRANSITION_FOR_LOOP_ORBIT { SET_COLOR; SET_X5; SET_Y6; OFFSET; ROTATE; OFFSET2; ROTATE_CLAMP2 } break;
+
+        case 6 << 4 | 5: TRANSITION_FOR_LOOP_ORBIT { SET_COLOR; SET_X6; SET_Y5; OFFSET; ROTATE; OFFSET2; ROTATE_CLAMP2 } break;
+        case 6 << 4 | 6: TRANSITION_FOR_LOOP_ORBIT { SET_COLOR; SET_X6; SET_Y6; OFFSET; ROTATE; OFFSET2; ROTATE_CLAMP2 } break;
 
         default: break;
         }
@@ -1509,8 +1567,9 @@ void big_o(ChordInfo *const info)
 
 }
 
-void remove_one(ChordInfo *const info, const int time=256)
+void remove_one(ChordInfo *const info)
 {
+    static int time = random(210, 410);
     const float count_inv = 0.5f / (float)time * TAU;
     const float xadd = info->xamp1[info->x_count - 1] / (float)(info->x_count - 1);
     const float yadd = info->yamp1[info->y_count - 1] / (float)(info->y_count - 1);
@@ -1545,10 +1604,12 @@ void remove_one(ChordInfo *const info, const int time=256)
     info->y_count--;
 }
 
-bool add_one(ChordInfo *const info, const int time=256)
+bool add_one(ChordInfo *const info)
 {
     if (info->x_count == (sizeof(info->xamp) / sizeof(float)) || info->y_count == (sizeof(info->yamp) / sizeof(float)))
         return true;
+
+    static int time = random(210, 410);
 
     ChordInfo new_info = {.x_count = (uint8_t)(info->x_count + 1), .y_count = (uint8_t)(info->y_count + 1)};
     make_chord(&new_info, false, 0.0f, hz_count_to_num_hz(new_info.x_count, new_info.y_count));
@@ -1605,167 +1666,95 @@ void off_center_twist(ChordInfo *const info)
 
 }
 // Not Done.
-void circle_orbit(ChordInfo *const info, const int time=256)
+
+
+
+void around_the_world(ChordInfo *const info, const int time=256)
 {    
-    static ChordInfo new_info;
-    const float count_inv = 0.5f / (float)time * TAU;
+    const float start_mult = 0.1f;
+    float grow_speed = (float)(rand()&255) / (256.0f * 300.0f) + 0.001f; // .001 -> .005
+    const float offset_add = (1 - max_amp) * 0.5f * 4096;
+    float cosine_adder = grow_speed * PI / (1.0f - start_mult);
+    float rotate_adder = cosine_adder * 0.5f;
+    info->orbit = true;
+    const float rotate2_mult = 3 * TAU;
+    float cos = PI;
+    float rotate_cos = PI;
 
-    for (uint8_t i = 0; i < info->other_hz_count; ++i)
-        new_info.other_hz[i] = info->other_hz[i];
-    new_info.other_hz_count = info->other_hz_count;
-
-    make_chord(&new_info, false, info->base_hz, info->x_count + info->y_count);
-
-    // search for the closest hz on the x and y
-    uint8_t xhz = 0, yhz = 0;
-    float closest = __FLT_MAX__, closeness;
-    for (uint8_t x = 0; x < info->x_count; ++x)
+    for (float amp_mult = 1; amp_mult > start_mult; 
+        amp_mult -= grow_speed, info->alpha_angle += info->alpha_angle_step, cos += cosine_adder, rotate_cos += rotate_adder)
     {
-        for (uint8_t y = 0; y < info->y_count; ++y)
-        {
-            closeness = fabsf(info->xhz[x] - info->yhz[y]);
-            if (closeness < closest)
-            {
-                closest = closeness;
-                xhz = x;
-                yhz = y;
-            }
-        }
-    }
-
-    // equal hz not found, make one instead.
-    float new_hz = 0;
-    const float max_difference = 0.001f;
-    while (closest > max_difference)
-    {
-        constexpr float MAX_OUT_TUNE = .1f;
-        constexpr float HZ_MULT = TAU / 40000.0f;
-        for (int i = 0; i < info->other_hz_count; ++i)
-        {
-            new_hz = info->other_hz[i] + (float)(rand() & 255) / ((255 / MAX_OUT_TUNE) + MAX_OUT_TUNE/2);
-            new_hz *= HZ_MULT;
-            closest = fabsf(new_hz - info->xhz[xhz]);
-            if (closest < max_difference)
-                break;
-        }
-    }
-
-    // merge the new hz into the shape
-    if (new_hz != 0)
-    {
-        const float original_yamp = info->yamp1[yhz];
-        const int yc = info->y_count;
-        info->yhz[yc] = new_hz;
-        info->y_count++;
-        
-        for (float j = 0, k = 0; j < time; j += 1, k += count_inv)
-        {
-            const float amp_mult = cosine(k) * 0.5f;
-            info->yamp1[yhz] = original_yamp * amp_mult;
-            info->yamp1[yc] = original_yamp - info->yamp1[yhz];
-
-            info->rotate_angle_start = info->alpha_angle;
-            info->rotate_angle_step = info->alpha_angle_step / (float)LEN;
-            info->alpha_angle += info->alpha_angle_step;
-            wait_then_make(false, info);
-        }
-
-        info->yhz[yhz] = new_hz;
-        info->yamp1[yhz] = original_yamp;
-        info->y_count--;
-    }
-
-
-    // make a list of the hz's index that can be removed
-    float x_original[5], y_original[5];
-    for (uint8_t i = 0; i < info->x_count; ++i)
-        x_original[i] = info->xamp1[i];
-    for (uint8_t i = 0; i < info->y_count; ++i)
-        y_original[i] = info->yamp1[i];
-    
-    // remove all hz's that are not those two close ones at the same time with cosine.
-    // and, move to one side a little bit.
-    for (float j = 0, k = 0; j < time; j += 1, k += count_inv)
-    {
-        const float amp_mult = cosine(k) * 0.5f;
-        float xhz_add = 0, yhz_add = 0;
-
-        for (uint8_t i = 0, j = 0; i < info->x_count; ++i, ++j)
-        {
-            if (i != xhz)
-            {
-                info->xamp1[j] = x_original[j] * amp_mult;
-                xhz_add += x_original[j] - info->xamp1[j];
-            }
-        }
-
-        for (uint8_t i = 0, j = 0; i < info->y_count; ++i, ++j)
-        {
-            if (i != yhz)
-            {
-                info->yamp1[j] = y_original[j] * amp_mult;
-                yhz_add += y_original[j] - info->yamp1[j];
-            }
-        }
-
-        info->xamp1[xhz] = x_original[xhz] + xhz_add;
-        info->yamp1[yhz] = y_original[yhz] + yhz_add;
         info->rotate_angle_start = info->alpha_angle;
         info->rotate_angle_step = info->alpha_angle_step / (float)LEN;
-        info->alpha_angle += info->alpha_angle_step;
+
+        const float new_amp = sine(((amp_mult + 1.5f) * 0.5f) * TAU) * 0.5f;
+        const float offset = (1.0f - new_amp) * 2048;
+        const float new_amp2 = sine(((amp_mult + 1.5f + grow_speed) * 0.5f) * TAU) * 0.5f;
+        const float offset2 = (1.0f - new_amp2) * 2048;
+
+        info->x_offset_start = offset * max_amp + offset_add;
+        info->x_offset_step = (offset2 - offset) / (float)LEN;
+        info->y_offset_start = info->x_offset_start;
+        info->y_offset_step = info->x_offset_step;
+        info->xamp_start = new_amp * max_amp;
+        info->xamp_step = (new_amp2 - new_amp) / (float)LEN;
+        info->yamp_start = info->xamp_start;
+        info->yamp_step = info->xamp_step;
+
+        info->rotate_angle_start2 = cosine(rotate_cos) * 0.5f * rotate2_mult;
+        info->x2_offset_start = cosine(cos) * 0.5f * 1024.0f;
+
+        info->x2_offset_step = (cosine(cos + cosine_adder) * 0.5f * 1024.0f - info->x2_offset_start) / (float)LEN;
+        info->rotate_angle_step2 = (cosine(rotate_cos + rotate_adder) * 0.5f * rotate2_mult - info->rotate_angle_start2) / (float)LEN;
+        wait_then_make(false, info);
+    } 
+
+    // random angle -.3 -> +.3
+    const float total_angle = ((float)(rand() & 1023) / (1023/RANDOM_ROTATION_ANGLE/2) - RANDOM_ROTATION_ANGLE) * TAU;
+    const float total_steps = (1.0f / grow_speed) + (1.0f / grow_speed) + stable_time - 2.0f;
+    info->alpha_angle_step = total_angle / total_steps;
+    info->alpha_angle = RANDOM_ROTATION_ANGLE * 5 * TAU;
+    wait_then_make(true, info);
+
+    for (float amp_mult = start_mult; amp_mult < 1; 
+        amp_mult += grow_speed, info->alpha_angle += info->alpha_angle_step, cos += cosine_adder, rotate_cos += rotate_adder)
+    {
+        info->rotate_angle_start = info->alpha_angle;
+        info->rotate_angle_step = info->alpha_angle_step / (float)LEN;
+
+        const float new_amp = sine(((amp_mult + 1.5f) * 0.5f) * TAU) * 0.5f;
+        const float offset = (1.0f - new_amp) * 2048;
+        const float new_amp2 = sine(((amp_mult + 1.5f + grow_speed) * 0.5f) * TAU) * 0.5f;
+        const float offset2 = (1.0f - new_amp2) * 2048;
+
+        info->x_offset_start = offset * max_amp + offset_add;
+        info->x_offset_step = (offset2 - offset) / (float)LEN;
+        info->y_offset_start = info->x_offset_start;
+        info->y_offset_step = info->x_offset_step;
+        info->xamp_start = new_amp * max_amp;
+        info->xamp_step = (new_amp2 - new_amp) / (float)LEN;
+        info->yamp_start = info->xamp_start;
+        info->yamp_step = info->xamp_step;
+
+        info->rotate_angle_start2 = cosine(rotate_cos) * 0.5f * rotate2_mult;
+        info->x2_offset_start = cosine(cos) * 0.5f * 1024.0f;
+
+        info->x2_offset_step = (cosine(cos + cosine_adder) * 0.5f * 1024.0f - info->x2_offset_start) / (float)LEN;
+        info->rotate_angle_step2 = (cosine(rotate_cos + rotate_adder) * 0.5f * rotate2_mult - info->rotate_angle_start2) / (float)LEN;
+
         wait_then_make(false, info);
     }
 
-    // merge the new hz's into the info struct
-    for (uint8_t i = 0; i < info->x_count; ++i)
-    {
-        if (i != xhz)
-        {
-            info->xhz[i] = new_info.xhz[i];
-            // x_original[i] = new_info.xamp1[i];
-        }
-    }
-
-    for (uint8_t i = 0; i < info->y_count; ++i)
-    {
-        if (i != yhz)
-        {
-            info->yhz[i] = new_info.yhz[i];
-            // y_original[i] = new_info.yamp1[i];
-        }
-    }
-
-    // add the new hz's back to the big "O"
-    for (float j = 0, k = PI; j < time; j += 1, k += count_inv)
-    {
-        const float amp_mult = cosine(k) * 0.5f;
-        float xhz_add = 0, yhz_add = 0;
-
-        for (uint8_t i = 0, j = 0; i < info->x_count; ++i, ++j)
-        {
-            if (i != xhz)
-            {
-                info->xamp1[j] = x_original[j] * amp_mult;
-                xhz_add += x_original[j] - info->xamp1[j];
-            }
-        }
-
-        for (uint8_t i = 0, j = 0; i < info->y_count; ++i, ++j)
-        {
-            if (i != yhz)
-            {
-                info->yamp1[j] = y_original[j] * amp_mult;
-                yhz_add += y_original[j] - info->yamp1[j];
-            }
-        }
-        
-        info->xamp1[xhz] = x_original[xhz] + xhz_add;
-        info->yamp1[yhz] = y_original[yhz] + yhz_add;
-        info->rotate_angle_start = info->alpha_angle;
-        info->rotate_angle_step = info->alpha_angle_step / (float)LEN;
-        info->alpha_angle += info->alpha_angle_step;
-        wait_then_make(false, info);
-    }
+    info->alpha_angle = info->rotate_angle_start + info->alpha_angle_step;
+    info->x_offset_start += info->x_offset_step;
+    info->y_offset_start += info->y_offset_step;
+    info->xamp_start += info->yamp_step;
+    info->yamp_start += info->xamp_step;
+    info->x_offset_step = 0;
+    info->y_offset_step = 0;
+    info->yamp_step = 0;
+    info->xamp_step = 0;
+    info->orbit = false;
 }
 
 
@@ -1826,7 +1815,7 @@ void maintain_and_change(ChordInfo *info)
 void transition(ChordInfo *info)
 {
     static uint8_t previous_num = 255;
-    const uint8_t num = random(11);
+    const uint8_t num = random(12);
 
     // dont do the same transition twice, and ensure that the color gets changed atleast every other transition
     if (num == previous_num || (previous_num > 5 && num > 5)) 
@@ -1837,9 +1826,8 @@ void transition(ChordInfo *info)
 
     previous_num = num;
 
-    // cosine_transistion(info);
-    // add_one(info);
-    // one_twist_in(info);
+    // around_the_world(info);
+    // cosine_twister(info);
     // maintain_shape(200, info);
     // return;
 
@@ -1872,14 +1860,15 @@ void transition(ChordInfo *info)
         shaker(info);
         break;
     case 8:
-    case 9:
         big_o(info);
         break;
-    case 10:
+    case 9:
         remove_one(info);
-    case 11:
+    case 10:
         if (add_one(info))
             return;
+    case 11:
+        around_the_world(info);
     default:
         break;
     }
@@ -1900,7 +1889,6 @@ void flow()
 
 /*
 
-    set up all transitions to be time flexable, and determine their max and min times of operation.
 
 
     //the twister: rotate a bunch of times and shrink.

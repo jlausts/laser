@@ -64,10 +64,10 @@
 
 
 
-#define SET_COLOR data_array[j].empty = false; \
-                  data_array[j].r  = info->r; \
-                  data_array[j].g  = info->g; \
-                  data_array[j].b  = info->b;
+#define SET_COLOR data_array[j].empty = false; 
+                //   data_array[j].r  = info->r; 
+                //   data_array[j].g  = info->g; 
+                //   data_array[j].b  = info->b;
 
 
 #define CLAMP if (data_array[j].laser_y > MAX_POSITION) data_array[j].laser_y = MAX_POSITION;\

@@ -9,9 +9,12 @@
 #define ARR_LEN 6
 typedef struct
 {
+    bool orbit;
     uint8_t x_count, y_count, r, g, b, other_hz_count, hz_using;
     uint16_t x_offset, y_offset, center_x, center_y;
     float x_offset_start, x_offset_step, y_offset_start, y_offset_step;
+    float x2_offset_start, x2_offset_step, y2_offset_start, y2_offset_step;
+    float rotate_angle_start2, rotate_angle_step2;
     float alpha_angle, alpha_angle_step;
     int t;
     float base_hz;
